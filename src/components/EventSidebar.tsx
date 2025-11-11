@@ -166,10 +166,9 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
         <SidebarMenu>
           {mainNav.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={`${basePath}${item.href}`} passHref>
+              <Link href={`${basePath}${item.href}`} passHref asChild>
                 <SidebarMenuButton
                   isActive={isLinkActive(`${basePath}${item.href}`)}
-                  as="a"
                 >
                   <item.icon />
                   <span>{item.label}</span>
@@ -192,8 +191,8 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
                     <SidebarMenuSub>
                     {nav.items.map((item) => (
                         <SidebarMenuSubItem key={item.href}>
-                            <Link href={`${basePath}${item.href}`} passHref>
-                                <SidebarMenuSubButton as="a" isActive={isSubLinkActive(`${basePath}${item.href}`)}>
+                            <Link href={`${basePath}${item.href}`} passHref asChild>
+                                <SidebarMenuSubButton isActive={isSubLinkActive(`${basePath}${item.href}`)}>
                                     {item.label}
                                 </SidebarMenuSubButton>
                             </Link>
