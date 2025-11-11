@@ -207,3 +207,5 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
     </>
   );
 }
+
+    
