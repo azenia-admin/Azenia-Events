@@ -577,7 +577,7 @@ const SidebarMenuButton = React.forwardRef<
       }
     }
 
-    return (
+    const buttonWithTooltip = (
       <Tooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent
@@ -587,7 +587,9 @@ const SidebarMenuButton = React.forwardRef<
           {...tooltip}
         />
       </Tooltip>
-    )
+    );
+
+    return asChild ? buttonWithTooltip : button;
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
