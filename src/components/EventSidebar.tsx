@@ -28,7 +28,7 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useDoc, useMemoFirebase } from '@/firebase';
-import { doc, DocumentData } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from './ui/skeleton';
@@ -166,9 +166,10 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
         <SidebarMenu>
           {mainNav.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={`${basePath}${item.href}`} passHref legacyBehavior>
+              <Link href={`${basePath}${item.href}`} passHref>
                 <SidebarMenuButton
                   isActive={isLinkActive(`${basePath}${item.href}`)}
+                  as="a"
                 >
                   <item.icon />
                   <span>{item.label}</span>
@@ -191,8 +192,8 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
                     <SidebarMenuSub>
                     {nav.items.map((item) => (
                         <SidebarMenuSubItem key={item.href}>
-                            <Link href={`${basePath}${item.href}`} passHref legacyBehavior>
-                                <SidebarMenuSubButton isActive={isSubLinkActive(`${basePath}${item.href}`)}>
+                            <Link href={`${basePath}${item.href}`} passHref>
+                                <SidebarMenuSubButton as="a" isActive={isSubLinkActive(`${basePath}${item.href}`)}>
                                     {item.label}
                                 </SidebarMenuSubButton>
                             </Link>
