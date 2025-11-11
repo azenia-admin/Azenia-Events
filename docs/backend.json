@@ -6,10 +6,6 @@
       "type": "object",
       "description": "Represents an event, such as a tech conference.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Event entity."
-        },
         "name": {
           "type": "string",
           "description": "Name of the event."
@@ -26,149 +22,17 @@
         "location": {
           "type": "string",
           "description": "Location of the event."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who created the event."
         }
       },
       "required": [
-        "id",
         "name",
-        "description",
         "date",
-        "location"
-      ]
-    },
-    "Venue": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Venue",
-      "type": "object",
-      "description": "Represents the venue where the event is held.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Venue entity."
-        },
-        "eventId": {
-          "type": "string",
-          "description": "Reference to Event. (Relationship: Event 1:1 Venue)"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the venue."
-        },
-        "capacity": {
-          "type": "number",
-          "description": "Seating capacity of the venue."
-        }
-      },
-      "required": [
-        "id",
-        "eventId",
-        "name",
-        "capacity"
-      ]
-    },
-    "Section": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Section",
-      "type": "object",
-      "description": "Represents a section within the venue.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Section entity."
-        },
-        "venueId": {
-          "type": "string",
-          "description": "Reference to Venue. (Relationship: Venue 1:N Section)"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the section (e.g., VVIP, VIP, Standard)."
-        },
-        "capacity": {
-          "type": "number",
-          "description": "Seating capacity of the section."
-        }
-      },
-      "required": [
-        "id",
-        "venueId",
-        "name",
-        "capacity"
-      ]
-    },
-    "TicketType": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "TicketType",
-      "type": "object",
-      "description": "Represents a type of ticket (e.g., VVIP, VIP, Standard).",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the TicketType entity."
-        },
-        "eventId": {
-          "type": "string",
-          "description": "Reference to Event. (Relationship: Event 1:N TicketType)"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the ticket type."
-        },
-        "price": {
-          "type": "number",
-          "description": "Price of the ticket."
-        },
-        "benefits": {
-          "type": "string",
-          "description": "Description of the benefits associated with the ticket type."
-        }
-      },
-      "required": [
-        "id",
-        "eventId",
-        "name",
-        "price",
-        "benefits"
-      ]
-    },
-    "Seat": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Seat",
-      "type": "object",
-      "description": "Represents a seat in the venue.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Seat entity."
-        },
-        "sectionId": {
-          "type": "string",
-          "description": "Reference to Section. (Relationship: Section 1:N Seat)"
-        },
-        "ticketTypeId": {
-          "type": "string",
-          "description": "Reference to TicketType allowed for this seat. (Relationship: TicketType 1:N Seat)"
-        },
-        "row": {
-          "type": "string",
-          "description": "Row number/identifier of the seat."
-        },
-        "number": {
-          "type": "string",
-          "description": "Seat number/identifier."
-        },
-        "isAvailable": {
-          "type": "boolean",
-          "description": "Indicates if the seat is currently available."
-        }
-      },
-      "required": [
-        "id",
-        "sectionId",
-        "ticketTypeId",
-        "row",
-        "number",
-        "isAvailable"
+        "location",
+        "userId"
       ]
     }
   },
@@ -181,126 +45,22 @@
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}/events/{eventId}",
+        "path": "/events/{eventId}",
         "definition": {
           "entityName": "Event",
           "schema": {
             "$ref": "#/backend/entities/Event"
           },
-          "description": "Stores event data. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores event data. Includes 'userId' for ownership-based security rules.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who created the event."
-            },
             {
               "name": "eventId",
               "description": "The unique ID of the event."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/events/{eventId}/venues/{venueId}",
-        "definition": {
-          "entityName": "Venue",
-          "schema": {
-            "$ref": "#/backend/entities/Venue"
-          },
-          "description": "Stores venue data. Includes denormalized 'userId' and 'eventId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who created the event."
-            },
-            {
-              "name": "eventId",
-              "description": "The unique ID of the event."
-            },
-            {
-              "name": "venueId",
-              "description": "The unique ID of the venue."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/events/{eventId}/ticketTypes/{ticketTypeId}",
-        "definition": {
-          "entityName": "TicketType",
-          "schema": {
-            "$ref": "#/backend/entities/TicketType"
-          },
-          "description": "Stores ticket type data. Includes denormalized 'userId' and 'eventId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who created the event."
-            },
-            {
-              "name": "eventId",
-              "description": "The unique ID of the event."
-            },
-            {
-              "name": "ticketTypeId",
-              "description": "The unique ID of the ticket type."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/events/{eventId}/sections/{sectionId}",
-        "definition": {
-          "entityName": "Section",
-          "schema": {
-            "$ref": "#/backend/entities/Section"
-          },
-          "description": "Stores section data. Includes denormalized 'userId' and 'eventId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who created the event."
-            },
-            {
-              "name": "eventId",
-              "description": "The unique ID of the event."
-            },
-            {
-              "name": "sectionId",
-              "description": "The unique ID of the section."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/events/{eventId}/sections/{sectionId}/seats/{seatId}",
-        "definition": {
-          "entityName": "Seat",
-          "schema": {
-            "$ref": "#/backend/entities/Seat"
-          },
-          "description": "Stores seat data. Includes denormalized 'userId', 'eventId', and 'sectionId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who created the event."
-            },
-            {
-              "name": "eventId",
-              "description": "The unique ID of the event."
-            },
-            {
-              "name": "sectionId",
-              "description": "The unique ID of the section."
-            },
-            {
-              "name": "seatId",
-              "description": "The unique ID of the seat."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the SeatingSavvy application, focusing on event creation, venue design, ticket management, and seat assignment. The design emphasizes authorization independence and simplifies security rules using denormalization. The structure is as follows:\n\n1.  **/users/{userId}/events/{eventId}**: This path stores event data specific to each user. Events are owned by the user who created them, and authorization is path-based. Venue, TicketType, and Section are subcollections of Events to scope those entities to the event they belong to.\n2.  **/users/{userId}/events/{eventId}/venues/{venueId}**: This path stores venue data specific to an event. Venues are owned by the event they belong to, and authorization is path-based.\n3.  **/users/{userId}/events/{eventId}/ticketTypes/{ticketTypeId}**: This path stores ticket type data specific to an event. Ticket types are owned by the event they belong to, and authorization is path-based.\n4.  **/users/{userId}/events/{eventId}/sections/{sectionId}**: This path stores section data specific to an event. Sections are owned by the event they belong to, and authorization is path-based.\n5.  **/users/{userId}/events/{eventId}/sections/{sectionId}/seats/{seatId}**: This path stores seat data specific to a section. Seats are owned by the section they belong to, and authorization is path-based.\n\n**Authorization Independence (Denormalization):**\nTo avoid hierarchical authorization dependencies (no `get()` calls in security rules), the structure uses path-based ownership. Subcollections inherit the event ownership from their parent events. Because subcollections are all children of `/users/{userId}/events/{eventId}`, we can easily write rules that grant the event owner full access to manage these subcollections.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure `list` operations by ensuring that all documents within a collection share the same security requirements. Path-based ownership (`/users/{userId}/events/{eventId}`) ensures that only the event owner can access or list events, preventing unauthorized access."
+    "reasoning": "The Firestore structure is simplified to a single 'events' collection. This is more efficient for querying all events and relies on a `userId` field within each event document for ownership and security rules. This avoids nested collections which can complicate queries and security rules, especially when trying to list all events across all users."
   }
 }

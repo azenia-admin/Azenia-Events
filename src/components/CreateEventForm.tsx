@@ -24,6 +24,11 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth, useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
+import { DialogClose } from "@/components/ui/dialog";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -35,6 +40,11 @@ const formSchema = z.object({
 });
 
 export function CreateEventForm() {
+  const auth = useAuth();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,8 +53,46 @@ export function CreateEventForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore) return;
+
+    let currentUserId = user?.uid;
+
+    if (!currentUserId) {
+      initiateAnonymousSignIn(auth);
+      toast({
+        title: "Signing in...",
+        description: "Please try again in a moment.",
+      });
+      return;
+    }
+
+    try {
+      const newEvent = {
+        ...values,
+        userId: currentUserId,
+      };
+      
+      const eventsCollection = collection(firestore, 'events');
+      await addDocumentNonBlocking(eventsCollection, newEvent);
+
+      toast({
+        title: "Event Created!",
+        description: `${values.name} has been successfully created.`,
+      });
+      
+      // Close the dialog by finding the close button and clicking it
+      // This is a bit of a workaround, but necessary without controlling dialog state from here
+      document.querySelector('[data-radix-dialog-close]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request.",
+      });
+    }
   }
 
   return (
@@ -111,7 +159,7 @@ export function CreateEventForm() {
                     selected={field.value}
                     onSelect={field.onChange}
                     disabled={(date) =>
-                      date < new Date() || date < new Date("1900-01-01")
+                      date < new Date(new Date().setHours(0,0,0,0))
                     }
                     initialFocus
                   />
