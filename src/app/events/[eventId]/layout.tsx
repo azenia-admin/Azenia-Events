@@ -1,12 +1,7 @@
-'use client';
+import EventLayoutClient from './EventLayoutClient';
 
-import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
-import { EventSidebar } from '@/components/EventSidebar';
-
-// Note: In Next.js App Router, for client components, 'params' is passed as a regular object.
-// The warning you saw is more relevant for Server Components where 'params' can be a Promise.
-// This implementation is correct for a client-side layout.
-
+// This is a server component by default.
+// It can safely access params and then pass them down to client components.
 export default function EventLayout({
   children,
   params,
@@ -15,13 +10,8 @@ export default function EventLayout({
   params: { eventId: string };
 }) {
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <EventSidebar eventId={params.eventId} />
-      </Sidebar>
-      <SidebarInset>
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <EventLayoutClient eventId={params.eventId}>
+      {children}
+    </EventLayoutClient>
   );
 }
