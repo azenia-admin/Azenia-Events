@@ -1,18 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PlusCircle, MapPin, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Dialog,
   DialogContent,
@@ -25,10 +17,28 @@ import { CreateEventForm } from '@/components/CreateEventForm';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const eventsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -37,16 +47,93 @@ export default function DashboardPage() {
 
   const { data: events, isLoading: areEventsLoading } = useCollection(eventsQuery);
 
-  const eventImages = [
-    PlaceHolderImages.find(p => p.id === 'event-1'),
-    PlaceHolderImages.find(p => p.id === 'event-2'),
-    PlaceHolderImages.find(p => p.id === 'event-3'),
-  ];
+  const eventImage = PlaceHolderImages.find(p => p.id === 'event-1');
+
+  const filteredEvents = events?.filter(event => 
+    event.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const now = new Date();
+  const activeAndUpcomingEvents = filteredEvents.filter(event => (event.date as any)?.toDate ? (event.date as any).toDate() >= now : new Date(event.date) >= now);
+  const pastEvents = filteredEvents.filter(event => (event.date as any)?.toDate ? (event.date as any).toDate() < now : new Date(event.date) < now);
+
+
+  const renderEventTable = (eventList: typeof filteredEvents) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[40%]">Name</TableHead>
+          <TableHead>End Date</TableHead>
+          <TableHead>Revenue</TableHead>
+          <TableHead>Registrations</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right"></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {eventList.length > 0 ? eventList.map((event) => {
+          const eventDate = (event.date as any)?.toDate ? (event.date as any).toDate() : new Date(event.date);
+          return (
+            <TableRow key={event.id}>
+              <TableCell>
+                <div className="flex items-center gap-4">
+                  {eventImage && (
+                     <Image
+                        src={eventImage.imageUrl}
+                        alt={eventImage.description}
+                        width={60}
+                        height={40}
+                        className="rounded-sm object-cover"
+                        data-ai-hint={eventImage.imageHint}
+                      />
+                  )}
+                  <Link href={`/events/${event.id}`} className="font-medium hover:text-primary transition-colors">
+                    {event.name}
+                  </Link>
+                </div>
+              </TableCell>
+              <TableCell>{eventDate.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</TableCell>
+              <TableCell>$0.00</TableCell>
+              <TableCell>1</TableCell>
+              <TableCell>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/events/${event.id}`}>Preview</Link>
+                </Button>
+              </TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>View</DropdownMenuItem>
+                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          );
+        }) : (
+          <TableRow>
+            <TableCell colSpan={6} className="h-24 text-center">
+              No events found.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold font-headline tracking-tight">Events Dashboard</h1>
+    <div className="flex-1 space-y-4 p-4 sm:p-6 lg:p-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Events</h1>
+          <p className="text-muted-foreground">The table below shows all of the events owned by you.</p>
+        </div>
         <Dialog>
           <DialogTrigger asChild>
             <Button>
@@ -66,82 +153,45 @@ export default function DashboardPage() {
         </Dialog>
       </div>
 
-      {(isUserLoading || areEventsLoading) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="p-0">
-                <Skeleton className="h-48 w-full" />
-              </CardHeader>
-              <CardContent className="p-4">
-                <Skeleton className="h-5 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6 mt-1" />
-              </CardContent>
-              <CardFooter className="p-4 bg-muted/50 flex flex-col items-start gap-2">
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardFooter>
-            </Card>
-          ))}
+      <Tabs defaultValue="active">
+        <TabsList>
+          <TabsTrigger value="active">Active & Upcoming</TabsTrigger>
+          <TabsTrigger value="past">Past</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+        </TabsList>
+        <div className="mt-4 border rounded-lg bg-card text-card-foreground shadow-sm">
+          <div className="p-4 flex justify-between items-center border-b">
+             <p className="font-semibold">{filteredEvents.length} Event{filteredEvents.length !== 1 && 's'}</p>
+             <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  type="search" 
+                  placeholder="Search..." 
+                  className="pl-8" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+             </div>
+          </div>
+          <TabsContent value="active" className="m-0">
+             {(isUserLoading || areEventsLoading) ? (
+                <div className="p-4">
+                  <Skeleton className="h-40 w-full" />
+                </div>
+              ) : renderEventTable(activeAndUpcomingEvents)}
+          </TabsContent>
+          <TabsContent value="past" className="m-0">
+            {(isUserLoading || areEventsLoading) ? (
+                <div className="p-4">
+                  <Skeleton className="h-40 w-full" />
+                </div>
+              ) : renderEventTable(pastEvents)}
+          </TabsContent>
+          <TabsContent value="templates" className="m-0">
+            <div className="p-10 text-center text-muted-foreground">Template functionality is not yet implemented.</div>
+          </TabsContent>
         </div>
-      )}
-
-      {!isUserLoading && !areEventsLoading && events && events.length === 0 && (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold">No Events Found</h2>
-          <p className="text-muted-foreground mt-2">Get started by creating your first event.</p>
-        </div>
-      )}
-
-      {!isUserLoading && !areEventsLoading && events && events.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event, index) => {
-            const image = eventImages[index % eventImages.length];
-            const eventDate = (event.date as any)?.toDate ? (event.date as any).toDate() : new Date(event.date);
-            const status = eventDate > new Date() ? 'Upcoming' : 'Past';
-
-            return (
-              <Card key={event.id} className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                <CardHeader className="p-0">
-                  {image && (
-                    <div className="relative h-48 w-full">
-                      <Image
-                        src={image.imageUrl}
-                        alt={image.description}
-                        fill
-                        className="object-cover"
-                        data-ai-hint={image.imageHint}
-                      />
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent className="p-4 flex-grow">
-                  <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-lg font-headline font-bold leading-tight">
-                      <Link href={`/events/${event.id}`} className="hover:text-primary transition-colors">
-                        {event.name}
-                      </Link>
-                    </CardTitle>
-                    <Badge variant={status === 'Upcoming' ? 'default' : 'secondary'} className={status === 'Upcoming' ? `bg-accent text-accent-foreground` : ''}>{status}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
-                </CardContent>
-                <CardFooter className="p-4 bg-muted/50 flex flex-col items-start gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4" />
-                        <span>{eventDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{event.location}</span>
-                    </div>
-                </CardFooter>
-              </Card>
-            )
-          })}
-        </div>
-      )}
+      </Tabs>
     </div>
   );
 }
