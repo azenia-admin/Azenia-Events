@@ -554,7 +554,7 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const { isMobile, state } = useSidebar()
-    const Comp = asChild ? Slot : 'button';
+    const Comp = asChild ? Slot : "button"
 
     const button = (
       <Comp
@@ -562,7 +562,7 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+        className={cn(sidebarMenuButtonVariants({ variant, size, className }))}
         {...props}
       />
     )
@@ -589,7 +589,7 @@ const SidebarMenuButton = React.forwardRef<
       </Tooltip>
     );
 
-    return asChild ? buttonWithTooltip : button;
+    return buttonWithTooltip;
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
