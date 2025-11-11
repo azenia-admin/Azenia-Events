@@ -25,6 +25,7 @@ import {
   SidebarHeader,
   SidebarMenuSub,
   SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useDoc, useMemoFirebase } from '@/firebase';
 import { doc, DocumentData } from 'firebase/firestore';
