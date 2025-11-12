@@ -15,60 +15,80 @@ import Script from 'next/script';
 interface SeatsioDesignerModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** IMPORTANT: Designer needs a CHART key, not an event key */
   chartKey?: string;
+  /** Only expose on admin/internal pages */
   secretKey?: string;
+  /** Seats.io workspace region, e.g. 'na', 'eu', 'sa', 'oc' */
   region?: string;
 }
 
 export function SeatsioDesignerModal({
   open,
   onOpenChange,
-  chartKey = 'demo-chart',
+  chartKey = 'demo-chart',   // make sure this is a real CHART key
   secretKey = '',
   region = 'na',
 }: SeatsioDesignerModalProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const designerRef = useRef<any>(null);
-  const containerId = useRef<string>(`chart-designer-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
-    if (!open || !scriptLoaded || typeof window === 'undefined') return;
-    if (!(window as any).seatsio || designerRef.current) return;
+    // Guard: only run on client with script loaded and modal open
+    if (!open) return;
+    if (!scriptLoaded) return;
+    if (typeof window === 'undefined') return;
+    if (!(window as any).seatsio) return;
 
-    const seatsio = (window as any).seatsio;
+    // Container must already be in the DOM (modal content mounted)
+    if (!containerRef.current) return;
 
+    // Designer requires a secret key and a CHART key
     if (!secretKey) {
       setError('Please configure your Seats.io secret key to use the designer.');
       return;
     }
+    if (!chartKey) {
+      setError('Missing chartKey. The Designer edits charts, not events.');
+      return;
+    }
+
+    // Avoid duplicate init
+    if (designerRef.current) return;
 
     try {
-      console.log('Creating SeatingChartDesigner with config:', {
-        divId: containerId.current,
-        chartKey,
+      const seatsio = (window as any).seatsio;
+
+      console.log('Init SeatingChartDesigner', {
         region,
-        secretKeyLength: secretKey.length
+        secretKeyLength: secretKey.length,
+        chartKey,
+        hasElement: !!containerRef.current,
       });
 
-      designerRef.current = new seatsio.SeatingChartDesigner({
-        divId: containerId.current,
+      // NOTE: do NOT pass divId. Pass the element directly to render(...)
+      const designer = new seatsio.SeatingChartDesigner({
         secretKey,
-        chartKey,
+        chartKey,   // MUST be a chart key
         region,
         language: 'en',
         features: {
           enabled: ['ROWS', 'TABLES', 'BOOTHS', 'GENERAL_ADMISSION', 'FOCAL_POINT'],
         },
-      }).render();
+      });
 
+      designerRef.current = designer.render(containerRef.current);
       console.log('Designer rendered successfully');
       setError(null);
-    } catch (err) {
-      console.error('Failed to init Designer:', err);
+    } catch (e) {
+      console.error('Failed to init Designer:', e);
       setError('Failed to render Designer');
     }
 
+    // Cleanup on close/unmount
     return () => {
       try {
         designerRef.current?.destroy?.();
@@ -92,6 +112,7 @@ export function SeatsioDesignerModal({
 
   return (
     <>
+      {/* Load once; alternatively move this <Script> to app/layout.tsx */}
       <Script
         src={`https://cdn-${region}.seatsio.net/chart.js`}
         strategy="afterInteractive"
@@ -129,7 +150,7 @@ export function SeatsioDesignerModal({
             )}
 
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
@@ -143,8 +164,11 @@ export function SeatsioDesignerModal({
                     Use the tools to create your venue layout. Changes are saved automatically.
                   </AlertDescription>
                 </Alert>
+
+                {/* The container MUST exist in the DOM when init runs */}
                 <div
-                  id={containerId.current}
+                  ref={containerRef}
+                  id="seatsio-designer-container"  // static id (helpful for debugging)
                   className="w-full h-full min-h-[600px] border rounded-lg overflow-hidden bg-white"
                   style={{ minHeight: 'calc(95vh - 200px)' }}
                 />
