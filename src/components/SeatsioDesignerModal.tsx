@@ -90,16 +90,16 @@ export function SeatsioDesignerModal({
     setScriptLoaded(true);
   };
 
-  const handleScriptError = () => {
-    console.error('Failed to load seats.io designer.js');
-    setError('Failed to load Seats.io library. Please check your internet connection.');
+  const handleScriptError = (e: any) => {
+    console.error('Failed to load seats.io designer.js from:', `https://cdn-${region}.seatsio.net/designer.js`, e);
+    setError(`Failed to load Seats.io library from ${region} region. Please verify your workspace region or check your internet connection.`);
   };
 
   return (
     <>
       <Script
         src={`https://cdn-${region}.seatsio.net/designer.js`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         onLoad={handleScriptLoad}
         onError={handleScriptError}
       />

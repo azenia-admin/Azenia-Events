@@ -17,8 +17,8 @@ interface SeatsioChartProps {
 
 export function SeatsioChart({
   eventKey,
-  workspaceKey = 'demo-workspace',
-  region = 'eu',
+  workspaceKey = process.env.NEXT_PUBLIC_SEATSIO_WORKSPACE_KEY || 'demo-workspace',
+  region = process.env.NEXT_PUBLIC_SEATSIO_REGION || 'na',
   onSelectionChange,
   mode = 'select',
   maxSelectedObjects,
@@ -75,12 +75,14 @@ export function SeatsioChart({
         </div>
       )}
 
-      <Alert className="mb-4">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          This is a demo seating chart. Configure your seats.io workspace key and event key to use your own seating charts.
-        </AlertDescription>
-      </Alert>
+      {workspaceKey === 'demo-workspace' && (
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            This is a demo seating chart. Configure your seats.io workspace key and event key to use your own seating charts.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="border rounded-lg overflow-hidden bg-white">
         <SeatsioSeatingChart
