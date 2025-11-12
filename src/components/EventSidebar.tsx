@@ -16,6 +16,7 @@ import {
   Heart,
   Settings,
   ChevronDown,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -26,7 +27,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 import { useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
@@ -209,6 +212,18 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
           ))}
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/">
+                <ArrowLeft />
+                <span>Back to Events</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </>
   );
 }
