@@ -23,10 +23,16 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Info, PlusCircle, Settings, Pencil, GripVertical } from 'lucide-react';
+import { Info, PlusCircle, Settings, Pencil, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import React from 'react';
+import React, { useState } from 'react';
+import { SeatsioChart } from '@/components/SeatsioChart';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 const tickets = [
   {
@@ -48,6 +54,12 @@ const tickets = [
 export default function SetupTicketsPage() {
   const params = useParams();
   const eventId = params.eventId;
+  const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
+  const [isSeatingOpen, setIsSeatingOpen] = useState(false);
+
+  const handleSelectionChange = (seats: any[]) => {
+    setSelectedSeats(seats);
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -108,14 +120,63 @@ export default function SetupTicketsPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold">Open the Venue Designer to set-up assigned seating for your event.</h3>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Assigned Seating</CardTitle>
+                  <CardDescription>
+                    Configure seat selection for your event using the interactive seating chart
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" asChild>
+                    <Link href={`/events/${eventId}/design/venue-designer`}>Full Designer</Link>
+                  </Button>
+                  <Collapsible open={isSeatingOpen} onOpenChange={setIsSeatingOpen}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="outline">
+                        {isSeatingOpen ? (
+                          <>
+                            <ChevronUp className="mr-2 h-4 w-4" />
+                            Hide Chart
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="mr-2 h-4 w-4" />
+                            Show Chart
+                          </>
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                  </Collapsible>
+                </div>
               </div>
-              <Button asChild>
-                <Link href={`/events/${eventId}/design/venue-designer`}>Open Venue Designer</Link>
-              </Button>
-            </CardContent>
+            </CardHeader>
+            <Collapsible open={isSeatingOpen} onOpenChange={setIsSeatingOpen}>
+              <CollapsibleContent>
+                <CardContent>
+                  <SeatsioChart
+                    eventKey="demo-event"
+                    workspaceKey="demo-workspace"
+                    region="eu"
+                    onSelectionChange={handleSelectionChange}
+                    mode="select"
+                  />
+                  {selectedSeats.length > 0 && (
+                    <div className="mt-4 p-4 border rounded-lg bg-muted">
+                      <h4 className="font-semibold mb-2">Selected Seats ({selectedSeats.length}):</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedSeats.map((seat, index) => (
+                          <span key={index} className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm">
+                            {seat.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
           
           <Card>
