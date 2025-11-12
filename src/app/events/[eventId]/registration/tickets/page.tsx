@@ -128,8 +128,8 @@ export default function SetupTicketsPage() {
             open={isDesignerOpen}
             onOpenChange={setIsDesignerOpen}
             chartKey={`event-${eventId}`}
-            secretKey=""
-            region="eu"
+            secretKey={process.env.NEXT_PUBLIC_SEATSIO_SECRET_KEY || ''}
+            region={process.env.NEXT_PUBLIC_SEATSIO_REGION || 'eu'}
           />
           
           <Card>
