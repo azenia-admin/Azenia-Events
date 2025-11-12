@@ -138,7 +138,7 @@ export function SeatsioDesignerModal({
     <>
       <Script
         key={currentRegion}
-        src={`https://cdn-${currentRegion}.seatsio.net/chart.js`}
+        src={`https://cdn-${currentRegion}.seatsio.net/designer.js`}
         onLoad={handleScriptLoad}
         onError={handleScriptError}
         strategy="lazyOnload"
