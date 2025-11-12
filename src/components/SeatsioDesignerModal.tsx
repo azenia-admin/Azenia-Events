@@ -30,8 +30,10 @@ export function SeatsioDesignerModal({
 }: SeatsioDesignerModalProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentRegion, setCurrentRegion] = useState(region);
   const designerRef = useRef<any>(null);
   const containerRef = useRef<string>(`chart-designer-${Math.random().toString(36).substr(2, 9)}`);
+  const scriptAttempts = useRef<string[]>([]);
 
   useEffect(() => {
     if (!open || !scriptLoaded) {
@@ -69,7 +71,7 @@ export function SeatsioDesignerModal({
           divId: containerRef.current,
           secretKey: secretKey,
           chartKey: chartKey,
-          region: region,
+          region: currentRegion,
           language: 'en',
           features: {
             enabled: ['ROWS', 'TABLES', 'BOOTHS', 'GENERAL_ADMISSION', 'FOCAL_POINT'],
@@ -94,20 +96,31 @@ export function SeatsioDesignerModal({
         designerRef.current = null;
       }
     };
-  }, [open, scriptLoaded, chartKey, secretKey, region]);
+  }, [open, scriptLoaded, chartKey, secretKey, currentRegion]);
 
   const handleScriptLoad = () => {
     setScriptLoaded(true);
   };
 
   const handleScriptError = () => {
-    setError('Failed to load Seats.io library. Please check your internet connection.');
+    const regions = ['na', 'eu', 'sa', 'oc'];
+    const currentIndex = regions.indexOf(currentRegion);
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex < regions.length && !scriptAttempts.current.includes(regions[nextIndex])) {
+      scriptAttempts.current.push(currentRegion);
+      setCurrentRegion(regions[nextIndex]);
+      setError(`Trying alternative region: ${regions[nextIndex].toUpperCase()}...`);
+    } else {
+      setError('Failed to load Seats.io library from all regions. Please verify your account region or check your internet connection.');
+    }
   };
 
   return (
     <>
       <Script
-        src={`https://cdn-${region}.seatsio.net/chart.js`}
+        key={currentRegion}
+        src={`https://cdn-${currentRegion}.seatsio.net/chart.js`}
         onLoad={handleScriptLoad}
         onError={handleScriptError}
         strategy="lazyOnload"
