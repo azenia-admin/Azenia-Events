@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import * as React from 'react';
+import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -84,8 +84,18 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: '',
+      startTime: '',
+      startAmPm: 'AM',
+      endTime: '',
+      endAmPm: 'AM',
+      format: '',
+      type: '',
+      location: '',
       allowAccessAfterEnd: false,
       isPrivate: true,
+      preEventAccessTime: '',
+      preEventAccessAmPm: 'AM',
     },
   });
 
