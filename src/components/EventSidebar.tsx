@@ -53,6 +53,7 @@ const subNavs = [
     items: [
         { href: '/design/visuals', label: 'Visuals' },
         { href: '/design/layout', label: 'Layout' },
+        { href: '/design/venue-designer', label: 'Venue Designer' },
     ]
   },
   {
@@ -172,6 +173,7 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
               <Link href={`${basePath}${item.href}`} asChild>
                 <SidebarMenuButton
                   isActive={isLinkActive(`${basePath}${item.href}`)}
+                  asChild={false}
                 >
                   <item.icon />
                   <span>{item.label}</span>

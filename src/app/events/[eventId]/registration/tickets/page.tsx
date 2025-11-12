@@ -24,6 +24,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Info, PlusCircle, Settings, Pencil, GripVertical } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import React from 'react';
 
 const tickets = [
@@ -44,6 +46,9 @@ const tickets = [
 ];
 
 export default function SetupTicketsPage() {
+  const params = useParams();
+  const eventId = params.eventId;
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Set Up Tickets</h1>
@@ -107,7 +112,9 @@ export default function SetupTicketsPage() {
               <div>
                 <h3 className="font-semibold">Open the Venue Designer to set-up assigned seating for your event.</h3>
               </div>
-              <Button>Open Venue Designer</Button>
+              <Button asChild>
+                <Link href={`/events/${eventId}/design/venue-designer`}>Open Venue Designer</Link>
+              </Button>
             </CardContent>
           </Card>
           
@@ -197,4 +204,3 @@ export default function SetupTicketsPage() {
     </div>
   );
 }
-
