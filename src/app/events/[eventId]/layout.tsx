@@ -1,16 +1,15 @@
 import EventLayoutClient from './EventLayoutClient';
 
-// This is a server component by default.
-// It can safely access params and then pass them down to client components.
-export default function EventLayout({
+export default async function EventLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { eventId: string };
+  params: Promise<{ eventId: string }>;
 }) {
+  const { eventId } = await params;
   return (
-    <EventLayoutClient eventId={params.eventId}>
+    <EventLayoutClient eventId={eventId}>
       {children}
     </EventLayoutClient>
   );

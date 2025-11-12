@@ -51,6 +51,11 @@ export default function SetupTicketsPage() {
   const eventId = params.eventId;
   const [isDesignerOpen, setIsDesignerOpen] = useState(false);
 
+  const secretKey = process.env.NEXT_PUBLIC_SEATSIO_SECRET_KEY || '';
+  const region = process.env.NEXT_PUBLIC_SEATSIO_REGION || 'na';
+
+  console.log('SeatsIO Config:', { secretKey: secretKey ? '***configured***' : 'missing', region });
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Set Up Tickets</h1>
@@ -128,8 +133,8 @@ export default function SetupTicketsPage() {
             open={isDesignerOpen}
             onOpenChange={setIsDesignerOpen}
             chartKey={`event-${eventId}`}
-            secretKey={process.env.NEXT_PUBLIC_SEATSIO_SECRET_KEY || ''}
-            region={process.env.NEXT_PUBLIC_SEATSIO_REGION || 'eu'}
+            secretKey={secretKey}
+            region={region}
           />
           
           <Card>

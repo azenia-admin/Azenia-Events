@@ -42,13 +42,22 @@ export function SeatsioDesignerModal({
 
     const timer = setTimeout(() => {
       try {
+        console.log('Initializing SeatsIO Designer:', {
+          scriptLoaded,
+          secretKeyPresent: !!secretKey,
+          region: currentRegion,
+          chartKey
+        });
+
         const seatsio = (window as any).seatsio;
         if (!seatsio) {
+          console.error('Seats.io library not found on window object');
           setError('Seats.io library not loaded. Please check your internet connection.');
           return;
         }
 
         if (!secretKey) {
+          console.error('Secret key missing');
           setError('Please configure your Seats.io secret key to use the designer.');
           return;
         }
@@ -67,6 +76,13 @@ export function SeatsioDesignerModal({
           }
         }
 
+        console.log('Creating designer with config:', {
+          divId: containerRef.current,
+          chartKey,
+          region: currentRegion,
+          secretKeyLength: secretKey.length
+        });
+
         designerRef.current = new seatsio.SeatingChartDesigner({
           divId: containerRef.current,
           secretKey: secretKey,
@@ -78,10 +94,11 @@ export function SeatsioDesignerModal({
           },
         }).render();
 
+        console.log('Designer rendered successfully');
         setError(null);
       } catch (err) {
         console.error('Error initializing designer:', err);
-        setError('Failed to initialize the seating chart designer. Please try again.');
+        setError(`Failed to initialize the seating chart designer: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }, 100);
 
@@ -99,6 +116,7 @@ export function SeatsioDesignerModal({
   }, [open, scriptLoaded, chartKey, secretKey, currentRegion]);
 
   const handleScriptLoad = () => {
+    console.log('Seats.io script loaded successfully from region:', currentRegion);
     setScriptLoaded(true);
   };
 
