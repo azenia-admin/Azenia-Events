@@ -59,8 +59,11 @@ const subNavs = [
     label: 'Registration',
     icon: Ticket,
     items: [
-        { href: '/registration/tickets', label: 'Ticket Types' },
-        { href: '/registration/forms', label: 'Registration Forms' },
+        { href: '/registration/tickets', label: 'Setup Tickets' },
+        { href: '/registration/forms', label: 'Order Forms' },
+        { href: '/registration/discounts', label: 'Discount & Access Codes' },
+        { href: '/registration/confirmation', label: 'Confirmation & Reminders' },
+        { href: '/registration/badges', label: 'Badges' },
     ]
   },
     {
