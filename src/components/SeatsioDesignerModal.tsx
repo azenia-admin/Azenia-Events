@@ -33,31 +33,26 @@ export function SeatsioDesignerModal({
   const containerId = useRef<string>(`chart-designer-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
-    if (!open) return;
-    if (!scriptLoaded) return;
-    if (!window || !(window as any).seatsio) return;
-    if (designerRef.current) return;
+    if (!open || !scriptLoaded || typeof window === 'undefined') return;
+    if (!(window as any).seatsio || designerRef.current) return;
+
+    const seatsio = (window as any).seatsio;
+
+    if (!secretKey) {
+      setError('Please configure your Seats.io secret key to use the designer.');
+      return;
+    }
 
     try {
-      const seatsio = (window as any).seatsio;
-      const container = document.getElementById(containerId.current);
-      if (!container) {
-        console.error('Container not found');
-        return;
-      }
-
-      if (!secretKey) {
-        setError('Please configure your Seats.io secret key to use the designer.');
-        return;
-      }
-
-      console.log('Creating designer with config:', {
+      console.log('Creating SeatingChartDesigner with config:', {
+        divId: containerId.current,
         chartKey,
         region,
         secretKeyLength: secretKey.length
       });
 
       designerRef.current = new seatsio.SeatingChartDesigner({
+        divId: containerId.current,
         secretKey,
         chartKey,
         region,
@@ -65,13 +60,13 @@ export function SeatsioDesignerModal({
         features: {
           enabled: ['ROWS', 'TABLES', 'BOOTHS', 'GENERAL_ADMISSION', 'FOCAL_POINT'],
         },
-      }).render(container);
+      }).render();
 
       console.log('Designer rendered successfully');
       setError(null);
     } catch (err) {
-      console.error('Failed to init Designer', err);
-      setError(`Failed to initialize the seating chart designer: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Failed to init Designer:', err);
+      setError('Failed to render Designer');
     }
 
     return () => {
@@ -86,20 +81,20 @@ export function SeatsioDesignerModal({
   }, [open, scriptLoaded, chartKey, region, secretKey]);
 
   const handleScriptLoad = () => {
-    console.log('Seats.io designer.js loaded successfully from region:', region);
+    console.log('Seats.io chart.js loaded successfully from region:', region);
     setScriptLoaded(true);
   };
 
   const handleScriptError = (e: any) => {
-    console.error('Failed to load seats.io designer.js from:', `https://cdn-${region}.seatsio.net/designer.js`, e);
-    setError(`Failed to load Seats.io library from ${region} region. Please verify your workspace region or check your internet connection.`);
+    console.error('Failed to load seats.io chart.js from:', `https://cdn-${region}.seatsio.net/chart.js`, e);
+    setError(`Could not load Seats.io from ${region}. Check CSP/network.`);
   };
 
   return (
     <>
       <Script
-        src={`https://cdn-${region}.seatsio.net/designer.js`}
-        strategy="lazyOnload"
+        src={`https://cdn-${region}.seatsio.net/chart.js`}
+        strategy="afterInteractive"
         onLoad={handleScriptLoad}
         onError={handleScriptError}
       />
