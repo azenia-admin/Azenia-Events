@@ -114,7 +114,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false,
-        }).split(':')[0],
+        }),
         startAmPm: eventDate.getHours() >= 12 ? 'PM' : 'AM',
         endTime: '11:59',
         endAmPm: 'PM',
@@ -134,10 +134,39 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
     if (!eventRef) return;
 
     try {
-        const startHour = (parseInt(values.startTime.split(':')[0]) % 12) + (values.startAmPm === 'PM' ? 12 : 0);
-        const startMinute = parseInt(values.startTime.split(':')[1]);
+        const timeParts = values.startTime.split(':');
+        if (timeParts.length !== 2) {
+            toast({
+                variant: 'destructive',
+                title: 'Invalid Time Format',
+                description: 'Please enter a valid start time.',
+            });
+            return;
+        }
+
+        const startHour24 = (parseInt(timeParts[0], 10) % 12) + (values.startAmPm === 'PM' ? 12 : 0);
+        const startMinute = parseInt(timeParts[1], 10);
+
+        if (isNaN(startHour24) || isNaN(startMinute)) {
+             toast({
+                variant: 'destructive',
+                title: 'Invalid Time',
+                description: 'The start time contains invalid numbers.',
+            });
+            return;
+        }
+
         const startDate = new Date(values.startDate);
-        startDate.setHours(startHour, startMinute);
+        startDate.setHours(startHour24, startMinute);
+        
+        if (isNaN(startDate.getTime())) {
+            toast({
+                variant: 'destructive',
+                title: 'Invalid Date',
+                description: 'The final event date is invalid. Please check your inputs.',
+            });
+            return;
+        }
 
         await updateDoc(eventRef, {
             name: values.name,
@@ -247,16 +276,28 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                         </Popover>
 
                         {/* Time inputs would go here */}
-                        <Input defaultValue="09:00" className='w-24' />
-                        <Select defaultValue='AM'>
-                            <SelectTrigger className='w-24'>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="AM">AM</SelectItem>
-                                <SelectItem value="PM">PM</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <FormField
+                            control={form.control}
+                            name="startTime"
+                            render={({ field }) => (
+                                <Input {...field} className='w-24' />
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="startAmPm"
+                            render={({ field }) => (
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger className='w-24'>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="AM">AM</SelectItem>
+                                        <SelectItem value="PM">PM</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
                       </div>
                        <Button variant="link" className='p-0 h-auto text-sm justify-start w-fit'>Schedule multiple events</Button>
                     </FormItem>
@@ -323,7 +364,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                       <FormLabel>Event Format</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -347,7 +388,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                       <FormLabel>Event Type</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -372,7 +413,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                       <FormLabel>Location</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
