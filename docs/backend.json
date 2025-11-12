@@ -34,6 +34,41 @@
         "location",
         "userId"
       ]
+    },
+    "Ticket": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Ticket",
+      "type": "object",
+      "description": "Represents a ticket type for an event.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the ticket type (e.g., VIP, General Admission)."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the ticket."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Number of tickets available."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time when ticket sales end."
+        },
+        "eventId": {
+          "type": "string",
+          "description": "The ID of the event this ticket belongs to."
+        }
+      },
+      "required": [
+        "name",
+        "price",
+        "quantity",
+        "eventId"
+      ]
     }
   },
   "auth": {
@@ -59,8 +94,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/events/{eventId}/tickets/{ticketId}",
+        "definition": {
+          "entityName": "Ticket",
+          "schema": {
+            "$ref": "#/backend/entities/Ticket"
+          },
+          "description": "Stores ticket types for a specific event.",
+          "params": [
+            {
+              "name": "eventId",
+              "description": "The unique ID of the event."
+            },
+            {
+              "name": "ticketId",
+              "description": "The unique ID of the ticket."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is simplified to a single 'events' collection. This is more efficient for querying all events and relies on a `userId` field within each event document for ownership and security rules. This avoids nested collections which can complicate queries and security rules, especially when trying to list all events across all users."
+    "reasoning": "The Firestore structure is simplified to a single 'events' collection. This is more efficient for querying all events and relies on a `userId` field within each event document for ownership and security rules. This avoids nested collections which can complicate queries and security rules, especially when trying to list all events across all users. A sub-collection for tickets is added under each event for better organization."
   }
 }
