@@ -23,11 +23,10 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Info, PlusCircle, Settings, Pencil, GripVertical, LayoutGrid } from 'lucide-react';
+import { Info, PlusCircle, Settings, Pencil, GripVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
-import { SeatsioDesignerModal } from '@/components/SeatsioDesignerModal';
 
 const tickets = [
   {
@@ -49,12 +48,6 @@ const tickets = [
 export default function SetupTicketsPage() {
   const params = useParams();
   const eventId = params.eventId;
-  const [isDesignerOpen, setIsDesignerOpen] = useState(false);
-
-  const secretKey = process.env.NEXT_PUBLIC_SEATSIO_SECRET_KEY || '';
-  const region = process.env.NEXT_PUBLIC_SEATSIO_REGION || 'na';
-
-  console.log('SeatsIO Config:', { secretKey: secretKey ? '***configured***' : 'missing', region });
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -114,29 +107,6 @@ export default function SetupTicketsPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Venue Designer</h3>
-                <p className="text-sm text-muted-foreground">
-                  Create and manage your venue floor plan with assigned seating
-                </p>
-              </div>
-              <Button onClick={() => setIsDesignerOpen(true)}>
-                <LayoutGrid className="mr-2 h-4 w-4" />
-                Open Venue Designer
-              </Button>
-            </CardContent>
-          </Card>
-
-          <SeatsioDesignerModal
-            open={isDesignerOpen}
-            onOpenChange={setIsDesignerOpen}
-            chartKey={`event-${eventId}`}
-            secretKey={secretKey}
-            region={region}
-          />
-          
           <Card>
             <CardContent className="p-6 grid gap-6">
               <div className="flex items-center justify-between">
