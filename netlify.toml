@@ -2,5 +2,8 @@
 command = "npx next build"
 publish = ".next"
 
+[build.environment]
+SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyA1tss17PNPdYtQm-Q2qfa7IZwkPCvpy5k"
+
 [[plugins]]
 package = "@netlify/plugin-nextjs"
