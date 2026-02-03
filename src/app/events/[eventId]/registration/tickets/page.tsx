@@ -23,9 +23,9 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Info, PlusCircle, Settings, Pencil, GripVertical } from 'lucide-react';
+import { Info, PlusCircle, Settings, Pencil, GripVertical, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 const tickets = [
@@ -47,7 +47,12 @@ const tickets = [
 
 export default function SetupTicketsPage() {
   const params = useParams();
+  const router = useRouter();
   const eventId = params.eventId;
+
+  const handleOpenVenueDesigner = () => {
+    router.push(`/events/${eventId}/design/venue-designer`);
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -104,6 +109,18 @@ export default function SetupTicketsPage() {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-muted/50">
+            <CardContent className="p-6 flex items-center justify-between">
+              <p className="text-sm">
+                Open the Venue Designer to set-up assigned seating for your event.
+              </p>
+              <Button onClick={handleOpenVenueDesigner}>
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Open Venue Designer
+              </Button>
             </CardContent>
           </Card>
 
