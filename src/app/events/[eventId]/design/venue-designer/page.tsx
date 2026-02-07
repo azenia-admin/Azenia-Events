@@ -1,23 +1,120 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
+import { doc } from 'firebase/firestore';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LayoutDashboard, Sparkles, ExternalLink, Armchair, Grid3X3, Move } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { LayoutDashboard, Sparkles, ExternalLink, Armchair, Grid3X3, Move, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { ensureSupabaseEvent } from '@/lib/ensure-event';
+import { supabase } from '@/lib/supabase';
 import AiSuggestionsPanel from './AiSuggestionsPanel';
+
+interface EventData {
+  name: string;
+}
+
+type SeatingStatus = 'not_started' | 'draft' | 'published';
 
 export default function VenueDesignerPage() {
   const [activeTab, setActiveTab] = useState('designer');
+  const [isOpening, setIsOpening] = useState(false);
+  const [seatingStatus, setSeatingStatus] = useState<SeatingStatus>('not_started');
+  const [layoutCount, setLayoutCount] = useState(0);
+  const params = useParams();
+  const eventId = params.eventId as string;
+  const { toast } = useToast();
+
+  const firestore = useFirestore();
+  const eventRef = useMemoFirebase(() => {
+    if (!firestore || !eventId) return null;
+    return doc(firestore, 'events', eventId);
+  }, [firestore, eventId]);
+
+  const { data: event } = useDoc<EventData>(eventRef);
+
+  const fetchSeatingStatus = useCallback(async () => {
+    const { data: supaEvent } = await supabase
+      .from('events')
+      .select('id')
+      .eq('firebase_event_id', eventId)
+      .maybeSingle();
+
+    if (!supaEvent) {
+      setSeatingStatus('not_started');
+      setLayoutCount(0);
+      return;
+    }
+
+    const { data: layouts } = await supabase
+      .from('venue_layouts')
+      .select('id, status')
+      .eq('event_id', supaEvent.id);
+
+    if (!layouts || layouts.length === 0) {
+      setSeatingStatus('not_started');
+      setLayoutCount(0);
+      return;
+    }
+
+    setLayoutCount(layouts.length);
+    const hasPublished = layouts.some((l: { status: string }) => l.status === 'published');
+    setSeatingStatus(hasPublished ? 'published' : 'draft');
+  }, [eventId]);
+
+  useEffect(() => {
+    fetchSeatingStatus();
+  }, [fetchSeatingStatus]);
+
+  const handleOpenDesigner = async () => {
+    setIsOpening(true);
+    try {
+      const supaEvent = await ensureSupabaseEvent(
+        eventId,
+        event?.name || 'Untitled Event'
+      );
+      const returnUrl = encodeURIComponent(window.location.href);
+      window.location.href = `https://seatingplansoftware.azeniatechnology.com/?eventId=${supaEvent.id}&returnUrl=${returnUrl}`;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      toast({
+        variant: 'destructive',
+        title: 'Could not open designer',
+        description: message,
+      });
+      setIsOpening(false);
+    }
+  };
+
+  const statusLabel: Record<SeatingStatus, string> = {
+    not_started: 'Not Started',
+    draft: `Draft (${layoutCount})`,
+    published: `Published (${layoutCount})`,
+  };
+
+  const statusVariant: Record<SeatingStatus, 'outline' | 'secondary' | 'default'> = {
+    not_started: 'outline',
+    draft: 'secondary',
+    published: 'default',
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-2 flex items-center justify-between border-b bg-background">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Venue Designer</h1>
-          <p className="text-sm text-muted-foreground">
-            Design your floor plan or get AI-powered layout suggestions.
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Venue Designer</h1>
+            <p className="text-sm text-muted-foreground">
+              Design your floor plan or get AI-powered layout suggestions.
+            </p>
+          </div>
+          <Badge variant={statusVariant[seatingStatus]}>
+            {statusLabel[seatingStatus]}
+          </Badge>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -68,11 +165,18 @@ export default function VenueDesignerPage() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button size="lg" className="gap-2" asChild>
-                    <a href="https://seatingplansoftware.azeniatechnology.com/" target="_blank" rel="noopener noreferrer">
-                      Open Designer
+                  <Button
+                    size="lg"
+                    className="gap-2"
+                    disabled={isOpening}
+                    onClick={handleOpenDesigner}
+                  >
+                    {isOpening ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
                       <ExternalLink className="h-4 w-4" />
-                    </a>
+                    )}
+                    {isOpening ? 'Preparing...' : 'Open Designer'}
                   </Button>
                 </div>
               </CardContent>
