@@ -122,7 +122,9 @@ export default function VenueDesignerPage() {
       console.log('Supabase event created/found:', supaEvent);
 
       const returnUrl = encodeURIComponent(window.location.href);
-      const designerUrl = `https://seatingplansoftware.azeniatechnology.com/?eventId=${supaEvent.id}&returnUrl=${returnUrl}`;
+      const supabaseUrl = encodeURIComponent(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
+      const supabaseKey = encodeURIComponent(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
+      const designerUrl = `https://seatingplansoftware.azeniatechnology.com/?eventId=${supaEvent.id}&returnUrl=${returnUrl}&supabaseUrl=${supabaseUrl}&supabaseKey=${supabaseKey}`;
 
       console.log('Navigating to:', designerUrl);
       window.location.href = designerUrl;
