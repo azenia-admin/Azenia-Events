@@ -38,48 +38,96 @@ export default function VenueDesignerPage() {
   const { data: event } = useDoc<EventData>(eventRef);
 
   const fetchSeatingStatus = useCallback(async () => {
-    const { data: supaEvent } = await supabase
-      .from('events')
-      .select('id')
-      .eq('firebase_event_id', eventId)
-      .maybeSingle();
+    try {
+      const { data: supaEvent, error: eventError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('firebase_event_id', eventId)
+        .maybeSingle();
 
-    if (!supaEvent) {
+      if (eventError) {
+        console.error('Error fetching event:', eventError);
+        setSeatingStatus('not_started');
+        setLayoutCount(0);
+        return;
+      }
+
+      if (!supaEvent) {
+        setSeatingStatus('not_started');
+        setLayoutCount(0);
+        return;
+      }
+
+      const { data: layouts, error: layoutsError } = await supabase
+        .from('venue_layouts')
+        .select('id, status')
+        .eq('event_id', supaEvent.id);
+
+      if (layoutsError) {
+        console.error('Error fetching layouts:', layoutsError);
+        setSeatingStatus('not_started');
+        setLayoutCount(0);
+        return;
+      }
+
+      if (!layouts || layouts.length === 0) {
+        setSeatingStatus('not_started');
+        setLayoutCount(0);
+        return;
+      }
+
+      setLayoutCount(layouts.length);
+      const hasPublished = layouts.some((l: { status: string }) => l.status === 'published');
+      setSeatingStatus(hasPublished ? 'published' : 'draft');
+    } catch (error) {
+      console.error('Unexpected error fetching seating status:', error);
       setSeatingStatus('not_started');
       setLayoutCount(0);
-      return;
     }
-
-    const { data: layouts } = await supabase
-      .from('venue_layouts')
-      .select('id, status')
-      .eq('event_id', supaEvent.id);
-
-    if (!layouts || layouts.length === 0) {
-      setSeatingStatus('not_started');
-      setLayoutCount(0);
-      return;
-    }
-
-    setLayoutCount(layouts.length);
-    const hasPublished = layouts.some((l: { status: string }) => l.status === 'published');
-    setSeatingStatus(hasPublished ? 'published' : 'draft');
   }, [eventId]);
 
   useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const { error } = await supabase.from('events').select('id').limit(1);
+        if (error) {
+          console.error('Supabase connection test failed:', error);
+        } else {
+          console.log('Supabase connection successful');
+        }
+      } catch (err) {
+        console.error('Supabase connection error:', err);
+      }
+    };
+    testConnection();
     fetchSeatingStatus();
   }, [fetchSeatingStatus]);
 
   const handleOpenDesigner = async () => {
     setIsOpening(true);
+
     try {
+      if (!eventId) {
+        throw new Error('Event ID is missing');
+      }
+
+      console.log('Opening designer for event:', eventId);
+      console.log('Event name:', event?.name);
+
       const supaEvent = await ensureSupabaseEvent(
         eventId,
         event?.name || 'Untitled Event'
       );
+
+      console.log('Supabase event created/found:', supaEvent);
+
       const returnUrl = encodeURIComponent(window.location.href);
-      window.location.href = `https://seatingplansoftware.azeniatechnology.com/?eventId=${supaEvent.id}&returnUrl=${returnUrl}`;
+      const designerUrl = `https://seatingplansoftware.azeniatechnology.com/?eventId=${supaEvent.id}&returnUrl=${returnUrl}`;
+
+      console.log('Navigating to:', designerUrl);
+      window.location.href = designerUrl;
     } catch (err: unknown) {
+      console.error('Error opening designer:', err);
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       toast({
         variant: 'destructive',
