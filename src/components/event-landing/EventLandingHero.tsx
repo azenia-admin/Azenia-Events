@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 interface EventLandingHeroProps {
   eventName: string;
 }
@@ -9,12 +7,10 @@ interface EventLandingHeroProps {
 export default function EventLandingHero({ eventName }: EventLandingHeroProps) {
   return (
     <div className="relative w-full aspect-[16/7] rounded-lg overflow-hidden bg-gray-900">
-      <Image
+      <img
         src="https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750"
         alt="Event banner"
-        fill
-        className="object-cover opacity-60"
-        priority
+        className="absolute inset-0 w-full h-full object-cover opacity-60"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-transparent" />
       <div className="absolute inset-0 flex items-center justify-center p-8">
