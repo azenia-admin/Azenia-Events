@@ -39,9 +39,9 @@ export default function EventLandingPage({ eventId }: { eventId: string }) {
   }, [isUserLoading, user, auth]);
 
   const eventRef = useMemoFirebase(() => {
-    if (!firestore || !eventId) return null;
+    if (!firestore || !eventId || !user) return null;
     return doc(firestore, 'events', eventId);
-  }, [firestore, eventId]);
+  }, [firestore, eventId, user]);
 
   const { data: event, isLoading } = useDoc<EventData>(eventRef);
 
@@ -73,7 +73,7 @@ export default function EventLandingPage({ eventId }: { eventId: string }) {
         })()
     : null;
 
-  if (isLoading) {
+  if (isLoading || isUserLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
