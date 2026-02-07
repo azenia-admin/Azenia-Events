@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import CreateTicketSidebar from '@/components/CreateTicketSidebar';
 import { Info, PlusCircle, Settings, Pencil, GripVertical, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -50,6 +51,8 @@ export default function SetupTicketsPage() {
   const router = useRouter();
   const eventId = params.eventId;
 
+  const [createTicketOpen, setCreateTicketOpen] = useState(false);
+
   const handleOpenVenueDesigner = () => {
     router.push(`/events/${eventId}/design/venue-designer`);
   };
@@ -65,7 +68,7 @@ export default function SetupTicketsPage() {
         <TabsContent value="tickets" className="space-y-6">
           <Card>
             <CardHeader>
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => setCreateTicketOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create Ticket
               </Button>
@@ -207,6 +210,8 @@ export default function SetupTicketsPage() {
             </Card>
         </TabsContent>
       </Tabs>
+
+      <CreateTicketSidebar open={createTicketOpen} onOpenChange={setCreateTicketOpen} />
     </div>
   );
 }
