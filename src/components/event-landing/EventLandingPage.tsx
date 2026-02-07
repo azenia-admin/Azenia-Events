@@ -1,6 +1,7 @@
 'use client';
 
-import { useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { useFirestore, useAuth, useUser, useMemoFirebase, useDoc } from '@/firebase';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { doc } from 'firebase/firestore';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
@@ -26,8 +27,16 @@ interface TicketData {
 
 export default function EventLandingPage({ eventId }: { eventId: string }) {
   const firestore = useFirestore();
+  const auth = useAuth();
+  const { user, isLoading: isUserLoading } = useUser();
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [activeTab, setActiveTab] = useState('about');
+
+  useEffect(() => {
+    if (!isUserLoading && !user && auth) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [isUserLoading, user, auth]);
 
   const eventRef = useMemoFirebase(() => {
     if (!firestore || !eventId) return null;
