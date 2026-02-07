@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Events' },
+  { href: '/seating', label: 'Seating Designer' },
   { href: '/organizer-profile', label: 'Organizer Profile' },
   { href: '/billing', label: 'Billing' },
   { href: '/team', label: 'Team' },
