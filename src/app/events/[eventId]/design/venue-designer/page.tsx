@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -70,10 +69,10 @@ export default function VenueDesignerPage() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button size="lg" className="gap-2" asChild>
-                    <Link href="/seating">
+                    <a href="https://seatingplansoftware.azeniatechnology.com/" target="_blank" rel="noopener noreferrer">
                       Open Designer
                       <ExternalLink className="h-4 w-4" />
-                    </Link>
+                    </a>
                   </Button>
                 </div>
               </CardContent>
