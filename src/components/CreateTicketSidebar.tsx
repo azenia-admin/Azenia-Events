@@ -26,7 +26,9 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CalendarIcon, ChevronDown, PlusCircle, Lock } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { CalendarIcon, ChevronDown, PlusCircle, Lock, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -130,6 +132,14 @@ export default function CreateTicketSidebar({ open, onOpenChange }: CreateTicket
   const [salesEndMinute, setSalesEndMinute] = useState('59');
   const [salesEndPeriod, setSalesEndPeriod] = useState('PM');
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [assignedSeating, setAssignedSeating] = useState(false);
+  const [ticketInvoicePdf, setTicketInvoicePdf] = useState('default');
+  const [confirmationPage, setConfirmationPage] = useState('default');
+  const [confirmationEmail, setConfirmationEmail] = useState('default');
+  const [trackRestriction, setTrackRestriction] = useState('none');
+  const [tagInput, setTagInput] = useState('');
+  const [bundleType, setBundleType] = useState('block');
+  const [ticketsPerBlock, setTicketsPerBlock] = useState('4');
 
   const buyerPrice = ticketType === 'free' ? 0 : Number(price) || 0;
   const revenuePerTicket = feeOption === 'pass' ? buyerPrice : buyerPrice;
@@ -152,6 +162,14 @@ export default function CreateTicketSidebar({ open, onOpenChange }: CreateTicket
     setSalesEndMinute('59');
     setSalesEndPeriod('PM');
     setAdvancedOpen(false);
+    setAssignedSeating(false);
+    setTicketInvoicePdf('default');
+    setConfirmationPage('default');
+    setConfirmationEmail('default');
+    setTrackRestriction('none');
+    setTagInput('');
+    setBundleType('block');
+    setTicketsPerBlock('4');
   };
 
   const handleCancel = () => {
@@ -347,12 +365,122 @@ export default function CreateTicketSidebar({ open, onOpenChange }: CreateTicket
                   )}
                 />
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="ticket-description" className="text-sm">
-                    Description
+              <CollapsibleContent className="pt-4 space-y-6">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="assigned-seating" className="text-sm">
+                    Assigned Seating
                   </Label>
-                  <Input id="ticket-description" placeholder="Optional ticket description" />
+                  <Switch
+                    id="assigned-seating"
+                    checked={assignedSeating}
+                    onCheckedChange={setAssignedSeating}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm flex items-center gap-1">
+                    Ticket Invoice PDF Design<span className="text-destructive">*</span>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Label>
+                  <Select value={ticketInvoicePdf} onValueChange={setTicketInvoicePdf}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Ticket PDF Design</SelectItem>
+                      <SelectItem value="custom">Custom PDF Design</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold">Order Confirmation</h4>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1">
+                      Confirmation Page<span className="text-destructive">*</span>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Label>
+                    <Select value={confirmationPage} onValueChange={setConfirmationPage}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Order Confirmation</SelectItem>
+                        <SelectItem value="custom">Custom Confirmation Page</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm">
+                      Confirmation Email<span className="text-destructive">*</span>
+                    </Label>
+                    <Select value={confirmationEmail} onValueChange={setConfirmationEmail}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Email Template</SelectItem>
+                        <SelectItem value="custom">Custom Email Template</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Track Restrictions</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket holders will not be able to join sessions with the following tracks.
+                  </p>
+                  <Select value={trackRestriction} onValueChange={setTrackRestriction}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No tracks selected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Tag Restrictions</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Ticket holders will not be able to join sessions with the following tags.
+                  </p>
+                  <Textarea
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    placeholder="Type to search or create a new tag"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Bundle Type</Label>
+                  <Select value={bundleType} onValueChange={setBundleType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="block">Block</SelectItem>
+                      <SelectItem value="individual">Individual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Number of tickets per {bundleType.toUpperCase()}
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={ticketsPerBlock}
+                    onChange={(e) => setTicketsPerBlock(e.target.value)}
+                  />
                 </div>
               </CollapsibleContent>
             </Collapsible>
