@@ -30,6 +30,8 @@ export function AppHeader() {
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
 
+  if (pathname.startsWith('/e/')) return null;
+
   return (
     <header className="border-b bg-card">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
