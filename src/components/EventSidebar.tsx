@@ -124,23 +124,20 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
   const { data: event, isLoading } = useDoc<{ name: string }>(eventRef);
   const eventImage = PlaceHolderImages.find((p) => p.id === 'event-1');
 
-  const basePath = `/events/${eventId}`;
-
-  // Function to determine if a main nav link or any of its children is active
-  const isLinkActive = (baseHref: string) => {
-    // Exact match for overview page
-    if (baseHref === basePath && pathname === basePath) {
-      return true;
-    }
-    // Starts with for other main navigation items
-    if (baseHref !== basePath && pathname.startsWith(baseHref)) {
-        return true;
-    }
-    return false;
+  const getHref = (path: string) => {
+    const basePath = path === '' ? '/events' : `/events${path}`;
+    return `${basePath}?eventId=${eventId}`;
   };
 
-  const isSubLinkActive = (href: string) => {
-      return pathname === href;
+  // Function to determine if a main nav link or any of its children is active
+  const isLinkActive = (path: string) => {
+    const expectedPath = path === '' ? '/events' : `/events${path}`;
+    return pathname === expectedPath;
+  };
+
+  const isSubLinkActive = (path: string) => {
+    const expectedPath = `/events${path}`;
+    return pathname === expectedPath;
   }
 
   return (
@@ -175,9 +172,9 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={isLinkActive(`${basePath}${item.href}`)}
+                isActive={isLinkActive(item.href)}
               >
-                <Link href={`${basePath}${item.href}`}>
+                <Link href={getHref(item.href)}>
                   <item.icon />
                   <span>{item.label}</span>
                 </Link>
@@ -185,7 +182,7 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
             </SidebarMenuItem>
           ))}
           {subNavs.map((nav) => (
-             <Collapsible key={nav.label} defaultOpen={nav.items.some(item => isSubLinkActive(`${basePath}${item.href}`))}>
+             <Collapsible key={nav.label} defaultOpen={nav.items.some(item => isSubLinkActive(item.href))}>
                 <CollapsibleTrigger asChild>
                    <SidebarMenuButton className="justify-between w-full">
                         <div className="flex items-center gap-2">
@@ -199,8 +196,8 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
                     <SidebarMenuSub>
                     {nav.items.map((item) => (
                         <SidebarMenuSubItem key={item.href}>
-                            <SidebarMenuSubButton asChild isActive={isSubLinkActive(`${basePath}${item.href}`)}>
-                                <Link href={`${basePath}${item.href}`}>
+                            <SidebarMenuSubButton asChild isActive={isSubLinkActive(item.href)}>
+                                <Link href={getHref(item.href)}>
                                     {item.label}
                                 </Link>
                             </SidebarMenuSubButton>

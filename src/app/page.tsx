@@ -87,7 +87,7 @@ export default function DashboardPage() {
                         data-ai-hint={eventImage.imageHint}
                       />
                   )}
-                  <Link href={`/events/${event.id}`} className="font-medium hover:text-primary transition-colors">
+                  <Link href={`/events?eventId=${event.id}`} className="font-medium hover:text-primary transition-colors">
                     {event.name}
                   </Link>
                 </div>
@@ -97,7 +97,7 @@ export default function DashboardPage() {
               <TableCell>1</TableCell>
               <TableCell>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/events/${event.id}`}>Preview</Link>
+                  <Link href={`/events?eventId=${event.id}`}>Preview</Link>
                 </Button>
               </TableCell>
               <TableCell className="text-right">
