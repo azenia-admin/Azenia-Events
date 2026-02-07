@@ -24,27 +24,22 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import CreateTicketSidebar from '@/components/CreateTicketSidebar';
-import { Info, PlusCircle, Settings, Pencil, GripVertical, LayoutGrid } from 'lucide-react';
-import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+import { Info, PlusCircle, Settings, Pencil, GripVertical, LayoutGrid, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 import { useParams, useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-const tickets = [
-  {
-    name: 'VIP',
-    endDate: 'Ends Dec 11, 2025 11:59 PM',
-    quantity: 100,
-    price: 200,
-    approval: 'No',
-  },
-  {
-    name: 'General Admission',
-    endDate: 'Ends Dec 11, 2025 11:59 PM',
-    quantity: 100,
-    price: 50,
-    approval: 'No',
-  },
-];
+interface Ticket {
+  id: string;
+  name: string;
+  ticket_type: string;
+  price: number;
+  quantity: number;
+  sold_count: number;
+  approval_required: boolean;
+  sales_end_at: string | null;
+}
 
 export default function SetupTicketsPage() {
   const params = useParams();
@@ -52,6 +47,25 @@ export default function SetupTicketsPage() {
   const eventId = params.eventId;
 
   const [createTicketOpen, setCreateTicketOpen] = useState(false);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTickets = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('id, name, ticket_type, price, quantity, sold_count, approval_required, sales_end_at')
+      .eq('event_id', eventId as string)
+      .order('created_at', { ascending: true });
+
+    if (!error && data) {
+      setTickets(data);
+    }
+    setLoading(false);
+  }, [eventId]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
 
   const handleOpenVenueDesigner = () => {
     router.push(`/events/${eventId}/design/venue-designer`);
@@ -86,30 +100,48 @@ export default function SetupTicketsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tickets.map((ticket, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{ticket.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {ticket.endDate}
-                        </div>
-                      </TableCell>
-                      <TableCell>{ticket.quantity}</TableCell>
-                      <TableCell>${ticket.price}</TableCell>
-                      <TableCell>{ticket.approval}</TableCell>
-                      <TableCell className="space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Settings className="h-4 w-4" />
-                        </Button>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : tickets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No tickets yet. Create one to get started.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    tickets.map((ticket) => (
+                      <TableRow key={ticket.id}>
+                        <TableCell>
+                          <GripVertical className="h-5 w-5 text-muted-foreground" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{ticket.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {ticket.sales_end_at
+                              ? `Ends ${format(new Date(ticket.sales_end_at), 'MMM d, yyyy h:mm a')}`
+                              : 'No end date'}
+                          </div>
+                        </TableCell>
+                        <TableCell>{ticket.quantity}</TableCell>
+                        <TableCell>
+                          {ticket.ticket_type === 'free' ? 'Free' : `$${Number(ticket.price).toFixed(0)}`}
+                        </TableCell>
+                        <TableCell>{ticket.approval_required ? 'Yes' : 'No'}</TableCell>
+                        <TableCell className="space-x-2">
+                          <Button variant="ghost" size="icon">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -211,7 +243,12 @@ export default function SetupTicketsPage() {
         </TabsContent>
       </Tabs>
 
-      <CreateTicketSidebar open={createTicketOpen} onOpenChange={setCreateTicketOpen} />
+      <CreateTicketSidebar
+        open={createTicketOpen}
+        onOpenChange={setCreateTicketOpen}
+        eventId={eventId as string}
+        onTicketCreated={fetchTickets}
+      />
     </div>
   );
 }

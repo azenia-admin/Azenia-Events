@@ -32,12 +32,15 @@ import { CalendarIcon, ChevronDown, PlusCircle, Lock, Info } from 'lucide-react'
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 type TicketType = 'paid' | 'free' | 'donation';
 
 interface CreateTicketSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  eventId: string;
+  onTicketCreated?: () => void;
 }
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -114,7 +117,17 @@ function DateTimePicker({
   );
 }
 
-export default function CreateTicketSidebar({ open, onOpenChange }: CreateTicketSidebarProps) {
+function buildDateTime(date: Date | undefined, hour: string, minute: string, period: string): string | null {
+  if (!date) return null;
+  let h = parseInt(hour, 10);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  const d = new Date(date);
+  d.setHours(h, parseInt(minute, 10), 0, 0);
+  return d.toISOString();
+}
+
+export default function CreateTicketSidebar({ open, onOpenChange, eventId, onTicketCreated }: CreateTicketSidebarProps) {
   const [ticketType, setTicketType] = useState<TicketType>('paid');
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('0');
@@ -177,9 +190,41 @@ export default function CreateTicketSidebar({ open, onOpenChange }: CreateTicket
     onOpenChange(false);
   };
 
-  const handleSave = () => {
-    onOpenChange(false);
-    resetForm();
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+
+    const { error } = await supabase.from('tickets').insert({
+      event_id: eventId,
+      name: name.trim(),
+      ticket_type: ticketType,
+      price: ticketType === 'free' ? 0 : parseFloat(price) || 0,
+      quantity: parseInt(quantity, 10) || 0,
+      approval_required: approvalRequired,
+      min_per_order: parseInt(minPerOrder, 10) || 0,
+      max_per_order: parseInt(maxPerOrder, 10) || 10,
+      fee_option: feeOption,
+      sales_start_at: buildDateTime(salesStartDate, salesStartHour, salesStartMinute, salesStartPeriod),
+      sales_end_at: buildDateTime(salesEndDate, salesEndHour, salesEndMinute, salesEndPeriod),
+      assigned_seating: assignedSeating,
+      ticket_invoice_pdf: ticketInvoicePdf,
+      confirmation_page: confirmationPage,
+      confirmation_email: confirmationEmail,
+      track_restriction: trackRestriction,
+      tag_restrictions: tagInput,
+      bundle_type: bundleType,
+      tickets_per_bundle: parseInt(ticketsPerBlock, 10) || 4,
+    });
+
+    setSaving(false);
+
+    if (!error) {
+      onOpenChange(false);
+      resetForm();
+      onTicketCreated?.();
+    }
   };
 
   return (
@@ -488,7 +533,9 @@ export default function CreateTicketSidebar({ open, onOpenChange }: CreateTicket
         </ScrollArea>
 
         <div className="flex gap-3 justify-start px-6 py-4 border-t">
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave} disabled={saving || !name.trim()}>
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
