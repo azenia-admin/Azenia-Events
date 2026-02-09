@@ -29,14 +29,11 @@ import {
   SidebarMenuSubItem,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { supabase } from '@/lib/supabase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from './ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 type EventSidebarProps = {
   eventId: string;
@@ -113,23 +110,29 @@ const subNavs = [
 ];
 
 export function EventSidebar({ eventId }: EventSidebarProps) {
-  const firestore = useFirestore();
   const pathname = usePathname();
-
-  const eventRef = useMemoFirebase(() => {
-    if (!firestore || !eventId) return null;
-    return doc(firestore, 'events', eventId);
-  }, [firestore, eventId]);
-
-  const { data: event, isLoading } = useDoc<{ name: string }>(eventRef);
+  const [event, setEvent] = useState<{ name: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const eventImage = PlaceHolderImages.find((p) => p.id === 'event-1');
+
+  useEffect(() => {
+    if (!eventId) return;
+    supabase
+      .from('events')
+      .select('name')
+      .eq('id', eventId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setEvent(data);
+        setIsLoading(false);
+      });
+  }, [eventId]);
 
   const getHref = (path: string) => {
     const basePath = path === '' ? '/events' : `/events${path}`;
     return `${basePath}?eventId=${eventId}`;
   };
 
-  // Function to determine if a main nav link or any of its children is active
   const isLinkActive = (path: string) => {
     const expectedPath = path === '' ? '/events' : `/events${path}`;
     return pathname === expectedPath;

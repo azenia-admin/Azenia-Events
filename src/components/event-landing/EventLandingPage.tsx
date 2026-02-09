@@ -1,8 +1,5 @@
 'use client';
 
-import { useFirestore, useAuth, useUser, useMemoFirebase, useDoc } from '@/firebase';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { doc } from 'firebase/firestore';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { Triangle, Loader2 } from 'lucide-react';
@@ -13,9 +10,9 @@ import EventLandingFooter from './EventLandingFooter';
 
 interface EventData {
   name: string;
-  description?: string;
-  date: { seconds: number; nanoseconds: number } | Date;
-  location?: string;
+  description: string | null;
+  start_date: string | null;
+  location: string | null;
 }
 
 interface TicketData {
@@ -26,41 +23,33 @@ interface TicketData {
 }
 
 export default function EventLandingPage({ eventId }: { eventId: string }) {
-  const firestore = useFirestore();
-  const auth = useAuth();
-  const { user, isLoading: isUserLoading } = useUser();
+  const [event, setEvent] = useState<EventData | null>(null);
   const [tickets, setTickets] = useState<TicketData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('about');
 
   useEffect(() => {
-    if (!isUserLoading && !user && auth) {
-      initiateAnonymousSignIn(auth);
+    async function fetchData() {
+      const [eventResult, ticketResult] = await Promise.all([
+        supabase
+          .from('events')
+          .select('name, description, start_date, location')
+          .eq('id', eventId)
+          .maybeSingle(),
+        supabase
+          .from('tickets')
+          .select('id, name, price, ticket_type')
+          .eq('event_id', eventId),
+      ]);
+
+      if (eventResult.data) setEvent(eventResult.data);
+      if (ticketResult.data) setTickets(ticketResult.data);
+      setIsLoading(false);
     }
-  }, [isUserLoading, user, auth]);
-
-  const eventRef = useMemoFirebase(() => {
-    if (!firestore || !eventId || !user) return null;
-    return doc(firestore, 'events', eventId);
-  }, [firestore, eventId, user]);
-
-  const { data: event, isLoading } = useDoc<EventData>(eventRef);
-
-  useEffect(() => {
-    async function fetchTickets() {
-      const { data } = await supabase
-        .from('tickets')
-        .select('id, name, price, ticket_type')
-        .eq('event_id', eventId);
-      if (data) setTickets(data);
-    }
-    fetchTickets();
+    fetchData();
   }, [eventId]);
 
-  const eventDate = event?.date
-    ? event.date instanceof Date
-      ? event.date
-      : new Date((event.date as { seconds: number }).seconds * 1000)
-    : null;
+  const eventDate = event?.start_date ? new Date(event.start_date) : null;
 
   const priceRange = tickets.length > 0
     ? tickets.every(t => t.ticket_type === 'free')
@@ -73,7 +62,7 @@ export default function EventLandingPage({ eventId }: { eventId: string }) {
         })()
     : null;
 
-  if (isLoading || isUserLoading || !user) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

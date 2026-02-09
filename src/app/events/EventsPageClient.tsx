@@ -1,8 +1,9 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useFirestore, useMemoFirebase, useDoc, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser } from '@/lib/supabase-auth';
+import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Ticket,
@@ -14,14 +15,13 @@ import {
   ChevronUp,
   Lock,
 } from 'lucide-react';
-import { useState } from 'react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import EventLayoutClient from './EventLayoutClient';
 
 interface EventData {
   name: string;
   description?: string;
-  date: { seconds: number; nanoseconds: number } | Date;
+  start_date: string | null;
   location?: string;
 }
 
@@ -66,18 +66,23 @@ const shortcuts = [
 export default function EventOverviewPage() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get('eventId');
-  const firestore = useFirestore();
   const { user } = useUser();
+  const [event, setEvent] = useState<EventData | null>(null);
   const [setupOpen, setSetupOpen] = useState(true);
 
-  const eventRef = useMemoFirebase(() => {
-    if (!firestore || !eventId) return null;
-    return doc(firestore, 'events', eventId);
-  }, [firestore, eventId]);
+  useEffect(() => {
+    if (!eventId) return;
+    supabase
+      .from('events')
+      .select('name, description, start_date, location')
+      .eq('id', eventId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setEvent(data);
+      });
+  }, [eventId]);
 
-  const { data: event } = useDoc<EventData>(eventRef);
-
-  const displayName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'there';
 
   if (!eventId) {
     return (

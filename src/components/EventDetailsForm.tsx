@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -42,8 +42,7 @@ import {
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from './ui/skeleton';
 import { Card, CardContent } from './ui/card';
@@ -69,17 +68,35 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface EventRow {
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  format: string | null;
+  type: string | null;
+  allow_access_after_end: boolean;
+  is_private: boolean;
+}
+
 export function EventDetailsForm({ eventId }: { eventId: string }) {
-  const firestore = useFirestore();
   const { toast } = useToast();
-
-  const eventRef = useMemoFirebase(() => {
-    if (!firestore || !eventId) return null;
-    return doc(firestore, 'events', eventId);
-  }, [firestore, eventId]);
-
-  const { data: event, isLoading: isEventLoading } = useDoc(eventRef);
+  const [event, setEvent] = useState<EventRow | null>(null);
+  const [isEventLoading, setIsEventLoading] = useState(true);
   const eventImage = PlaceHolderImages.find((p) => p.id === 'event-1');
+
+  useEffect(() => {
+    if (!eventId) return;
+    supabase
+      .from('events')
+      .select('name, start_date, end_date, location, format, type, allow_access_after_end, is_private')
+      .eq('id', eventId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setEvent(data);
+        setIsEventLoading(false);
+      });
+  }, [eventId]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -102,14 +119,12 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
   const { reset } = form;
   React.useEffect(() => {
     if (event) {
-      const eventDate = (event.date as any)?.toDate
-        ? (event.date as any).toDate()
-        : new Date(event.date);
+      const eventDate = event.start_date ? new Date(event.start_date) : new Date();
 
       reset({
         name: event.name,
         startDate: eventDate,
-        endDate: eventDate,
+        endDate: event.end_date ? new Date(event.end_date) : eventDate,
         startTime: eventDate.toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
@@ -118,11 +133,11 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
         startAmPm: eventDate.getHours() >= 12 ? 'PM' : 'AM',
         endTime: '11:59',
         endAmPm: 'PM',
-        location: (event as any).location || 'To be announced',
-        format: 'In Person',
-        type: 'Please Select (optional)',
-        allowAccessAfterEnd: false,
-        isPrivate: true,
+        location: event.location || 'To be announced',
+        format: event.format || 'In Person',
+        type: event.type || 'Please Select (optional)',
+        allowAccessAfterEnd: event.allow_access_after_end,
+        isPrivate: event.is_private,
         preEventAccessDate: eventDate,
         preEventAccessTime: '08:30',
         preEventAccessAmPm: 'AM',
@@ -131,8 +146,6 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
   }, [event, reset]);
 
   const onSubmit = async (values: FormValues) => {
-    if (!eventRef) return;
-
     try {
         const timeParts = values.startTime.split(':');
         if (timeParts.length !== 2) {
@@ -158,7 +171,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
 
         const startDate = new Date(values.startDate);
         startDate.setHours(startHour24, startMinute);
-        
+
         if (isNaN(startDate.getTime())) {
             toast({
                 variant: 'destructive',
@@ -168,11 +181,16 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
             return;
         }
 
-        await updateDoc(eventRef, {
+        const { error } = await supabase
+          .from('events')
+          .update({
             name: values.name,
-            date: startDate,
+            start_date: startDate.toISOString(),
             location: values.location,
-        });
+          })
+          .eq('id', eventId);
+
+        if (error) throw error;
 
         toast({
             title: 'Success!',
@@ -238,7 +256,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                     <p className='text-sm text-muted-foreground'>Sherjil Baig Events</p>
                     <Button variant="link" className='p-0 h-auto text-sm'>Change organizer</Button>
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name="startDate"
@@ -275,7 +293,6 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                           </PopoverContent>
                         </Popover>
 
-                        {/* Time inputs would go here */}
                         <FormField
                             control={form.control}
                             name="startTime"
@@ -303,7 +320,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="endDate"
@@ -339,7 +356,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                             />
                           </PopoverContent>
                         </Popover>
-                        
+
                         <Input defaultValue="11:59" className='w-24' />
                         <Select defaultValue='PM'>
                             <SelectTrigger className='w-24'>
@@ -456,7 +473,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                         <p className='w-full text-left'>Expo</p>
                     </Button>
                 </div>
-                
+
                  <FormField
                   control={form.control}
                   name="allowAccessAfterEnd"
@@ -476,7 +493,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className='md:col-span-2 space-y-2'>
                     <h3 className='font-medium'>Event Logo</h3>
                     <p className='text-sm text-muted-foreground'>This is the main image for your event. We recommend a 700 x 350px (2:1 ratio) image.</p>
@@ -532,7 +549,7 @@ export function EventDetailsForm({ eventId }: { eventId: string }) {
                             />
                           </PopoverContent>
                         </Popover>
-                        
+
                         <Input defaultValue="08:30" className='w-24' />
                         <Select defaultValue='AM'>
                             <SelectTrigger className='w-24'>

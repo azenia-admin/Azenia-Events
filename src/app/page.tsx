@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PlusCircle, Search, MoreHorizontal } from 'lucide-react';
@@ -14,8 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { CreateEventForm } from '@/components/CreateEventForm';
-import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useUser } from '@/lib/supabase-auth';
+import { supabase } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,28 +35,53 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
+interface EventRow {
+  id: string;
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  description: string | null;
+  location: string | null;
+}
+
 export default function DashboardPage() {
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const { user, isLoading: isUserLoading } = useUser();
+  const [events, setEvents] = useState<EventRow[]>([]);
+  const [areEventsLoading, setAreEventsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const eventsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, 'events'), where('userId', '==', user.uid));
-  }, [firestore, user]);
+  const fetchEvents = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('events')
+      .select('id, name, start_date, end_date, description, location')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    setEvents(data || []);
+    setAreEventsLoading(false);
+  }, [user]);
 
-  const { data: events, isLoading: areEventsLoading } = useCollection(eventsQuery);
+  useEffect(() => {
+    if (user) {
+      fetchEvents();
+    } else if (!isUserLoading) {
+      setAreEventsLoading(false);
+    }
+  }, [user, isUserLoading, fetchEvents]);
 
   const eventImage = PlaceHolderImages.find(p => p.id === 'event-1');
 
-  const filteredEvents = events?.filter(event => 
+  const filteredEvents = events.filter(event =>
     event.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   const now = new Date();
-  const activeAndUpcomingEvents = filteredEvents.filter(event => (event.date as any)?.toDate ? (event.date as any).toDate() >= now : new Date(event.date) >= now);
-  const pastEvents = filteredEvents.filter(event => (event.date as any)?.toDate ? (event.date as any).toDate() < now : new Date(event.date) < now);
-
+  const activeAndUpcomingEvents = filteredEvents.filter(event =>
+    event.start_date ? new Date(event.start_date) >= now : true
+  );
+  const pastEvents = filteredEvents.filter(event =>
+    event.start_date ? new Date(event.start_date) < now : false
+  );
 
   const renderEventTable = (eventList: typeof filteredEvents) => (
     <Table>
@@ -72,7 +97,7 @@ export default function DashboardPage() {
       </TableHeader>
       <TableBody>
         {eventList.length > 0 ? eventList.map((event) => {
-          const eventDate = (event.date as any)?.toDate ? (event.date as any).toDate() : new Date(event.date);
+          const eventDate = event.start_date ? new Date(event.start_date) : null;
           return (
             <TableRow key={event.id}>
               <TableCell>
@@ -92,7 +117,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               </TableCell>
-              <TableCell>{eventDate.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</TableCell>
+              <TableCell>{eventDate ? eventDate.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '-'}</TableCell>
               <TableCell>$0.00</TableCell>
               <TableCell>1</TableCell>
               <TableCell>
@@ -148,7 +173,7 @@ export default function DashboardPage() {
                 Fill in the details below to create a new event.
               </DialogDescription>
             </DialogHeader>
-            <CreateEventForm />
+            <CreateEventForm onCreated={fetchEvents} />
           </DialogContent>
         </Dialog>
       </div>
@@ -164,10 +189,10 @@ export default function DashboardPage() {
              <p className="font-semibold">{filteredEvents.length} Event{filteredEvents.length !== 1 && 's'}</p>
              <div className="relative w-full max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  type="search" 
-                  placeholder="Search..." 
-                  className="pl-8" 
+                <Input
+                  type="search"
+                  placeholder="Search..."
+                  className="pl-8"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />

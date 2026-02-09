@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown, Triangle } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/lib/supabase-auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -28,10 +28,14 @@ const navLinks = [
 
 export function AppHeader() {
   const { user } = useUser();
+  const { signOut } = useAuth();
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
 
   if (pathname === '/e' || pathname.startsWith('/e?')) return null;
+
+  const isAnonymous = user?.is_anonymous ?? false;
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
 
   return (
     <header className="border-b bg-card">
@@ -85,9 +89,9 @@ export function AppHeader() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.isAnonymous ? 'Anonymous User' : user?.displayName || 'User'}</p>
+                    <p className="text-sm font-medium leading-none">{isAnonymous ? 'Anonymous User' : displayName}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {user?.isAnonymous ? 'anon@example.com' : user?.email}
+                      {isAnonymous ? 'anon@example.com' : user?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -95,7 +99,7 @@ export function AppHeader() {
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

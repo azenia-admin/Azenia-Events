@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,11 +23,9 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth, useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from "firebase/firestore";
+import { useUser, useAuth } from '@/lib/supabase-auth';
+import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
-import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
-import { DialogClose } from "@/components/ui/dialog";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -39,10 +36,9 @@ const formSchema = z.object({
   location: z.string().min(2, "Location must be at least 2 characters."),
 });
 
-export function CreateEventForm() {
-  const auth = useAuth();
+export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
   const { user } = useUser();
-  const firestore = useFirestore();
+  const { signInAnonymously } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -54,37 +50,41 @@ export function CreateEventForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore) return;
-
-    let currentUserId = user?.uid;
-
-    if (!currentUserId) {
-      initiateAnonymousSignIn(auth);
-      toast({
-        title: "Signing in...",
-        description: "Please try again in a moment.",
-      });
+    if (!user) {
+      try {
+        await signInAnonymously();
+        toast({
+          title: "Signing in...",
+          description: "Please try again in a moment.",
+        });
+      } catch {
+        toast({
+          variant: "destructive",
+          title: "Sign-in failed",
+          description: "Could not sign in. Please try again.",
+        });
+      }
       return;
     }
 
     try {
-      const newEvent = {
-        ...values,
-        userId: currentUserId,
-      };
-      
-      const eventsCollection = collection(firestore, 'events');
-      await addDocumentNonBlocking(eventsCollection, newEvent);
+      const { error } = await supabase.from('events').insert({
+        name: values.name,
+        description: values.description || '',
+        start_date: values.date.toISOString(),
+        location: values.location,
+        user_id: user.id,
+      });
+
+      if (error) throw error;
 
       toast({
         title: "Event Created!",
         description: `${values.name} has been successfully created.`,
       });
-      
-      // Close the dialog by finding the close button and clicking it
-      // This is a bit of a workaround, but necessary without controlling dialog state from here
-      document.querySelector('[data-radix-dialog-close]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
+      onCreated?.();
+      document.querySelector('[data-radix-dialog-close]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     } catch (error) {
       console.error("Error creating event:", error);
       toast({
