@@ -13,7 +13,13 @@ export async function ensureSupabaseEvent(
     throw new Error('Firebase event ID is required');
   }
 
+  if (!eventName || eventName.trim() === '') {
+    throw new Error('Event name is required');
+  }
+
   try {
+    console.log('Checking for existing Supabase event with firebase_event_id:', firebaseEventId);
+
     const { data: existing, error: selectError } = await supabase
       .from('events')
       .select('id, firebase_event_id')
@@ -26,14 +32,17 @@ export async function ensureSupabaseEvent(
     }
 
     if (existing) {
+      console.log('Found existing event:', existing.id);
       return existing as SupabaseEvent;
     }
+
+    console.log('Creating new Supabase event for:', eventName);
 
     const { data: created, error: insertError } = await supabase
       .from('events')
       .insert({
         firebase_event_id: firebaseEventId,
-        name: eventName || 'Untitled Event',
+        name: eventName.trim(),
       })
       .select('id, firebase_event_id')
       .single();
@@ -42,6 +51,7 @@ export async function ensureSupabaseEvent(
       console.error('Insert error:', insertError);
 
       if (insertError.code === '23505') {
+        console.log('Duplicate key error, retrying select...');
         const { data: retry, error: retryError } = await supabase
           .from('events')
           .select('id, firebase_event_id')
@@ -52,6 +62,7 @@ export async function ensureSupabaseEvent(
           console.error('Retry error:', retryError);
           throw new Error('Unable to create or find event in database');
         }
+        console.log('Found event on retry:', retry.id);
         return retry as SupabaseEvent;
       }
       throw new Error(`Unable to create event: ${insertError.message}`);
@@ -61,6 +72,7 @@ export async function ensureSupabaseEvent(
       throw new Error('Event was not created');
     }
 
+    console.log('Successfully created event:', created.id);
     return created as SupabaseEvent;
   } catch (error) {
     console.error('ensureSupabaseEvent error:', error);

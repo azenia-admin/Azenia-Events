@@ -114,7 +114,11 @@ export default function VenueDesignerPage() {
         throw new Error('Event ID is missing');
       }
 
-      console.log('Opening designer for event:', eventId);
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase configuration is missing');
+      }
+
+      console.log('Opening designer for Firebase event:', eventId);
       console.log('Event name:', event?.name);
 
       const supaEvent = await ensureSupabaseEvent(
@@ -122,14 +126,24 @@ export default function VenueDesignerPage() {
         event?.name || 'Untitled Event'
       );
 
-      console.log('Supabase event created/found:', supaEvent);
+      console.log('Supabase event UUID:', supaEvent.id);
+      console.log('Firebase event ID:', supaEvent.firebase_event_id);
+
+      if (!supaEvent.id) {
+        throw new Error('Failed to get valid Supabase event ID');
+      }
 
       const returnUrl = encodeURIComponent(window.location.href);
-      const supabaseUrl = encodeURIComponent(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
-      const supabaseKey = encodeURIComponent(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
+      const supabaseUrl = encodeURIComponent(process.env.NEXT_PUBLIC_SUPABASE_URL);
+      const supabaseKey = encodeURIComponent(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
       const designerUrl = `https://seatingplansoftware.azeniatechnology.com/?eventId=${supaEvent.id}&returnUrl=${returnUrl}&supabaseUrl=${supabaseUrl}&supabaseKey=${supabaseKey}`;
 
-      console.log('Navigating to:', designerUrl);
+      console.log('Opening seating planner with:');
+      console.log('  - eventId (UUID):', supaEvent.id);
+      console.log('  - returnUrl:', window.location.href);
+      console.log('  - Full URL:', designerUrl);
+
       window.location.href = designerUrl;
     } catch (err: unknown) {
       console.error('Error opening designer:', err);
