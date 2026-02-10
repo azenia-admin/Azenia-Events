@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,10 +37,93 @@ const formSchema = z.object({
   location: z.string().min(2, "Location must be at least 2 characters."),
 });
 
+const authSchema = z.object({
+  email: z.string().email("Please enter a valid email."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+});
+
+function AuthForm({ onAuthenticated }: { onAuthenticated: () => void }) {
+  const { signUp, signInWithPassword } = useAuth();
+  const { toast } = useToast();
+  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<z.infer<typeof authSchema>>({
+    resolver: zodResolver(authSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  async function onSubmit(values: z.infer<typeof authSchema>) {
+    setIsSubmitting(true);
+    try {
+      if (isSignUp) {
+        await signUp(values.email, values.password);
+      } else {
+        await signInWithPassword(values.email, values.password);
+      }
+      onAuthenticated();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Authentication failed. Please try again.";
+      toast({ variant: "destructive", title: isSignUp ? "Sign up failed" : "Sign in failed", description: message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center space-y-1">
+        <p className="text-sm text-muted-foreground">
+          {isSignUp ? "Create an account to start managing events." : "Sign in to your account."}
+        </p>
+      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="you@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Min 6 characters" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
+          </Button>
+        </form>
+      </Form>
+      <p className="text-center text-sm text-muted-foreground">
+        {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+        <button type="button" className="underline hover:text-foreground transition-colors" onClick={() => setIsSignUp(!isSignUp)}>
+          {isSignUp ? "Sign in" : "Sign up"}
+        </button>
+      </p>
+    </div>
+  );
+}
+
 export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
   const { user } = useUser();
-  const { signInAnonymously } = useAuth();
   const { toast } = useToast();
+  const [showEventForm, setShowEventForm] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,23 +133,12 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
     },
   });
 
+  if (!user && !showEventForm) {
+    return <AuthForm onAuthenticated={() => setShowEventForm(true)} />;
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
-      try {
-        await signInAnonymously();
-        toast({
-          title: "Signing in...",
-          description: "Please try again in a moment.",
-        });
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "Sign-in failed",
-          description: "Could not sign in. Please try again.",
-        });
-      }
-      return;
-    }
+    if (!user) return;
 
     try {
       const { error } = await supabase.from('events').insert({

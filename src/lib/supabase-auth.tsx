@@ -7,7 +7,6 @@ import { supabase } from './supabase';
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
-  signInAnonymously: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -16,7 +15,6 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoading: true,
-  signInAnonymously: async () => {},
   signUp: async () => {},
   signInWithPassword: async () => {},
   signOut: async () => {},
@@ -40,11 +38,6 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInAnonymously = async () => {
-    const { error } = await supabase.auth.signInAnonymously();
-    if (error) throw error;
-  };
-
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
@@ -61,7 +54,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signInAnonymously, signUp, signInWithPassword, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, signUp, signInWithPassword, signOut }}>
       {children}
     </AuthContext.Provider>
   );
