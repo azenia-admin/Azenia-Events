@@ -326,6 +326,3 @@ export default function WebsitePreview({
     </div>
   );
 }
-
-
-export default WebsitePreview
