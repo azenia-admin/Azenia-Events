@@ -18,7 +18,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
-  { href: '/', label: 'Events' },
+  { href: '/dashboard', label: 'Events' },
   { href: '/seating', label: 'Seating Designer' },
   { href: '/organizer-profile', label: 'Organizer Profile' },
   { href: '/billing', label: 'Billing' },
@@ -33,6 +33,8 @@ export function AppHeader() {
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
 
   if (pathname === '/e' || pathname.startsWith('/e?')) return null;
+  if (pathname === '/') return null;
+  if (!user) return null;
 
   const isAnonymous = user?.is_anonymous ?? false;
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
