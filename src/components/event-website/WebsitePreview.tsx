@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, Linkedin, Facebook, Mail, MapPin } from 'lucide-react';
+import { Calendar, Clock, Linkedin, Facebook, Mail, MapPin, Pencil, Loader2 } from 'lucide-react';
 import type { WebsiteConfig } from '@/lib/event-website-config';
 
 interface WebsitePreviewProps {
@@ -13,6 +13,9 @@ interface WebsitePreviewProps {
   config: WebsiteConfig;
   interactive?: boolean;
   onRegister?: () => void;
+  editable?: boolean;
+  onUploadImage?: (kind: 'banner' | 'card', file: File) => Promise<void>;
+  uploadingKind?: 'banner' | 'card' | null;
 }
 
 function XIcon({ className }: { className?: string }) {
@@ -31,7 +34,12 @@ export default function WebsitePreview({
   config,
   interactive = true,
   onRegister,
+  editable = false,
+  onUploadImage,
+  uploadingKind = null,
 }: WebsitePreviewProps) {
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
+  const cardInputRef = useRef<HTMLInputElement | null>(null);
   const tabs = useMemo(() => config.navTabs.filter((t) => t.enabled), [config.navTabs]);
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key ?? 'about');
   const active = tabs.find((t) => t.key === activeTab) ? activeTab : tabs[0]?.key;
@@ -88,6 +96,34 @@ export default function WebsitePreview({
             {eventName || 'Your event name'}
           </h1>
         </div>
+        {editable && (
+          <>
+            <button
+              type="button"
+              onClick={() => bannerInputRef.current?.click()}
+              disabled={uploadingKind === 'banner'}
+              className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md bg-white/95 hover:bg-white text-[#1B1A17] text-xs font-medium px-3 h-8 shadow-sm border border-black/5 disabled:opacity-70"
+            >
+              {uploadingKind === 'banner' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Pencil className="h-3.5 w-3.5" />
+              )}
+              Change Image
+            </button>
+            <input
+              ref={bannerInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file && onUploadImage) await onUploadImage('banner', file);
+                e.target.value = '';
+              }}
+            />
+          </>
+        )}
       </section>
 
       <div className="max-w-5xl mx-auto px-4 md:px-6 -mt-16 md:-mt-24 relative">
@@ -102,6 +138,34 @@ export default function WebsitePreview({
                 alt="Event"
                 className="absolute inset-0 w-full h-full object-cover opacity-70"
               />
+            )}
+            {editable && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => cardInputRef.current?.click()}
+                  disabled={uploadingKind === 'card'}
+                  className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md bg-white/95 hover:bg-white text-[#1B1A17] text-xs font-medium px-3 h-8 shadow-sm border border-black/5 disabled:opacity-70"
+                >
+                  {uploadingKind === 'card' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Pencil className="h-3.5 w-3.5" />
+                  )}
+                  Change Image
+                </button>
+                <input
+                  ref={cardInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file && onUploadImage) await onUploadImage('card', file);
+                    e.target.value = '';
+                  }}
+                />
+              </>
             )}
             <div className="absolute inset-0 flex items-center justify-center p-6">
               <div className="text-center">

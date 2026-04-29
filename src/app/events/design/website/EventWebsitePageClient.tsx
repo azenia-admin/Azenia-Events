@@ -71,6 +71,58 @@ export default function EventWebsitePageClient() {
   const [copied, setCopied] = useState(false);
   const [openSection, setOpenSection] = useState<SectionKey>('general');
   const [tab, setTab] = useState<'basic' | 'settings'>('basic');
+  const [uploadingKind, setUploadingKind] = useState<'banner' | 'card' | null>(null);
+
+  async function handleUploadImage(kind: 'banner' | 'card', file: File) {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      if (!userId) {
+        toast({
+          variant: 'destructive',
+          title: 'Sign in required',
+          description: 'You must be signed in to upload images.',
+        });
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast({
+          variant: 'destructive',
+          title: 'Unsupported file',
+          description: 'Please choose an image file.',
+        });
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        toast({
+          variant: 'destructive',
+          title: 'File too large',
+          description: 'Image must be under 8 MB.',
+        });
+        return;
+      }
+      setUploadingKind(kind);
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${userId}/${eventId}/${kind}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('event-assets')
+        .upload(path, file, { cacheControl: '3600', upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('event-assets').getPublicUrl(path);
+      const url = pub.publicUrl;
+      setConfig((prev) => ({
+        ...prev,
+        bannerImageUrl: kind === 'banner' ? url : prev.bannerImageUrl,
+        cardImageUrl: kind === 'card' ? url : prev.cardImageUrl,
+      }));
+      toast({ title: 'Image uploaded', description: 'Remember to save your changes.' });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed.';
+      toast({ variant: 'destructive', title: 'Upload failed', description: message });
+    } finally {
+      setUploadingKind(null);
+    }
+  }
 
   useEffect(() => {
     if (!eventId) return;
@@ -547,6 +599,9 @@ export default function EventWebsitePageClient() {
                     location={event?.location ?? null}
                     config={config}
                     interactive={false}
+                    editable
+                    uploadingKind={uploadingKind}
+                    onUploadImage={handleUploadImage}
                   />
                 </div>
               </div>
