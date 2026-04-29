@@ -78,24 +78,9 @@ export default function WebsitePreview({
           <img
             src={config.bannerImageUrl}
             alt="Event banner"
-            className="absolute inset-0 w-full h-full object-cover opacity-60"
+            className="absolute inset-0 w-full h-full object-cover"
           />
         )}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0.15))',
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center px-6">
-          <h1
-            className="font-headline text-3xl md:text-5xl font-bold text-center leading-tight drop-shadow-lg"
-            style={{ color: config.colors.heroText }}
-          >
-            {eventName || 'Your event name'}
-          </h1>
-        </div>
         {editable && (
           <>
             <button
@@ -136,7 +121,7 @@ export default function WebsitePreview({
               <img
                 src={config.cardImageUrl}
                 alt="Event"
-                className="absolute inset-0 w-full h-full object-cover opacity-70"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             )}
             {editable && (
@@ -167,19 +152,6 @@ export default function WebsitePreview({
                 />
               </>
             )}
-            <div className="absolute inset-0 flex items-center justify-center p-6">
-              <div className="text-center">
-                <h2
-                  className="font-headline text-2xl md:text-3xl font-bold leading-tight"
-                  style={{ color: config.colors.heroText }}
-                >
-                  <span className="italic opacity-80 mr-2" style={{ color: config.colors.accent }}>
-                    creative
-                  </span>
-                  {eventName || 'Your event'}
-                </h2>
-              </div>
-            </div>
           </div>
 
           <aside className="rounded-xl bg-white border border-black/5 shadow-sm p-5 flex flex-col">
@@ -354,3 +326,6 @@ export default function WebsitePreview({
     </div>
   );
 }
+
+
+export default WebsitePreview
