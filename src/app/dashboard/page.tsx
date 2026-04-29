@@ -170,14 +170,29 @@ export default function DashboardPage() {
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle className="font-headline">Create New Event</DialogTitle>
-                  <DialogDescription>
-                    Fill in the details below to create a new event.
+              <DialogContent className="sm:max-w-[480px] bg-[#FAF6F1] border-[#E8DFD3]">
+                <DialogHeader className="space-y-2">
+                  <p className="text-[#D97757] text-xs font-medium tracking-wider uppercase">
+                    New event
+                  </p>
+                  <DialogTitle className="font-headline text-3xl font-bold tracking-tight text-[#1B1A17]">
+                    Start something <span className="italic text-[#D97757]">memorable.</span>
+                  </DialogTitle>
+                  <DialogDescription className="text-[#55514B]">
+                    Give your event a name and date. You can refine everything else from the
+                    event dashboard.
                   </DialogDescription>
                 </DialogHeader>
-                <CreateEventForm onCreated={fetchEvents} />
+                <div className="pt-2">
+                  <CreateEventForm
+                    onCreated={async (eventId) => {
+                      setCreateOpen(false);
+                      await fetchEvents();
+                      if (eventId) router.push(`/events?eventId=${eventId}`);
+                    }}
+                    onCancel={() => setCreateOpen(false)}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
