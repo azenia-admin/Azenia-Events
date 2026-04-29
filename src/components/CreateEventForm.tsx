@@ -172,6 +172,15 @@ export function CreateEventForm({ onCreated, onCancel }: Props) {
     if (!user) return;
     setIsSubmitting(true);
     try {
+      const baseSlug = values.name
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 50) || 'event';
+      const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 8)}`;
+
       const { data, error } = await supabase
         .from('events')
         .insert({
@@ -181,6 +190,7 @@ export function CreateEventForm({ onCreated, onCancel }: Props) {
           location: values.location,
           user_id: user.id,
           organization_id: currentOrganization?.id ?? null,
+          slug,
         })
         .select('id')
         .maybeSingle();

@@ -52,6 +52,7 @@ const subNavs = [
     label: 'Event Design',
     icon: Brush,
     items: [
+        { href: '/design/website', label: 'Event Website' },
         { href: '/design/visuals', label: 'Visuals' },
         { href: '/design/layout', label: 'Layout' },
         { href: '/design/venue-designer', label: 'Venue Designer' },
