@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { SupabaseAuthProvider } from '@/lib/supabase-auth';
+import { OrganizationProvider } from '@/lib/organization';
 import { AppHeader } from '@/components/AppHeader';
 
 export const metadata: Metadata = {
@@ -23,12 +24,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background">
         <SupabaseAuthProvider>
-          <div className="flex flex-col min-h-screen">
-            <AppHeader />
-            <main className="flex-1">
-              {children}
-            </main>
-          </div>
+          <OrganizationProvider>
+            <div className="flex flex-col min-h-screen">
+              <AppHeader />
+              <main className="flex-1">
+                {children}
+              </main>
+            </div>
+          </OrganizationProvider>
         </SupabaseAuthProvider>
         <Toaster />
       </body>

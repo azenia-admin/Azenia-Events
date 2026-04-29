@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import { CreateEventForm } from '@/components/CreateEventForm';
 import { useUser } from '@/lib/supabase-auth';
+import { useOrganization } from '@/lib/organization';
 import { supabase } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,7 @@ type TabKey = 'active' | 'past' | 'templates';
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useUser();
+  const { currentOrganization, isLoading: isOrgLoading } = useOrganization();
   const router = useRouter();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [areEventsLoading, setAreEventsLoading] = useState(true);
@@ -64,22 +66,27 @@ export default function DashboardPage() {
 
   const fetchEvents = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
+    setAreEventsLoading(true);
+    let query = supabase
       .from('events')
-      .select('id, name, start_date, end_date, description, location')
+      .select('id, name, start_date, end_date, description, location, organization_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+    if (currentOrganization) {
+      query = query.eq('organization_id', currentOrganization.id);
+    }
+    const { data } = await query;
     setEvents(data || []);
     setAreEventsLoading(false);
-  }, [user]);
+  }, [user, currentOrganization]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !isOrgLoading) {
       fetchEvents();
-    } else if (!isUserLoading) {
+    } else if (!isUserLoading && !user) {
       setAreEventsLoading(false);
     }
-  }, [user, isUserLoading, fetchEvents]);
+  }, [user, isUserLoading, isOrgLoading, fetchEvents]);
 
   const eventImage = PlaceHolderImages.find((p) => p.id === 'event-1');
 

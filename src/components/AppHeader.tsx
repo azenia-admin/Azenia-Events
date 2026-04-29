@@ -11,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Check, Building2, Plus } from 'lucide-react';
 import { useUser, useAuth } from '@/lib/supabase-auth';
+import { useOrganization } from '@/lib/organization';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,7 @@ const navLinks = [
 export function AppHeader() {
   const { user } = useUser();
   const { signOut } = useAuth();
+  const { organizations, currentOrganization, setCurrentOrganization } = useOrganization();
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages.find((p) => p.id === 'user-avatar');
 
@@ -58,16 +60,50 @@ export function AppHeader() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="hidden md:flex items-center gap-1 text-sm text-[#55514B] hover:text-[#1B1A17] hover:bg-[#F0E6D6]"
+                  className="hidden md:flex items-center gap-2 text-sm text-[#1B1A17] hover:bg-[#F0E6D6] rounded-full pl-2 pr-3 h-9 border border-[#E8DFD3]"
                 >
-                  Switch organizer
-                  <ChevronDown className="h-4 w-4" />
+                  <div className="h-6 w-6 rounded-md bg-[#E8A355]/20 border border-[#E8A355]/30 flex items-center justify-center">
+                    <Building2 className="h-3 w-3 text-[#D97757]" />
+                  </div>
+                  <span className="max-w-[160px] truncate font-medium">
+                    {currentOrganization?.name || 'No organization'}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-[#8A8378]" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Organizations</DropdownMenuLabel>
-                <DropdownMenuItem>Sherjil Baig Events</DropdownMenuItem>
-                <DropdownMenuItem>My Other Org</DropdownMenuItem>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuLabel className="text-xs text-[#8A8378] uppercase tracking-wider">
+                  Your organizations
+                </DropdownMenuLabel>
+                {organizations.map((org) => (
+                  <DropdownMenuItem
+                    key={org.id}
+                    onClick={() => setCurrentOrganization(org)}
+                    className="flex items-center justify-between gap-2 py-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="h-7 w-7 rounded-md bg-[#F0E6D6] border border-[#E8DFD3] flex items-center justify-center flex-shrink-0">
+                        <Building2 className="h-3.5 w-3.5 text-[#D97757]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{org.name}</p>
+                        {org.is_primary && (
+                          <p className="text-xs text-[#8A8378]">Primary</p>
+                        )}
+                      </div>
+                    </div>
+                    {currentOrganization?.id === org.id && (
+                      <Check className="h-4 w-4 text-[#3F704D] flex-shrink-0" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/organizer-profile" className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Manage organizations
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

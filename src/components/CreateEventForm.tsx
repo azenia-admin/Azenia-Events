@@ -25,6 +25,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser, useAuth } from '@/lib/supabase-auth';
+import { useOrganization } from '@/lib/organization';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
 
@@ -122,6 +123,7 @@ function AuthForm({ onAuthenticated }: { onAuthenticated: () => void }) {
 
 export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
   const { user } = useUser();
+  const { currentOrganization } = useOrganization();
   const { toast } = useToast();
   const [showEventForm, setShowEventForm] = useState(false);
 
@@ -147,6 +149,7 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
         start_date: values.date.toISOString(),
         location: values.location,
         user_id: user.id,
+        organization_id: currentOrganization?.id ?? null,
       });
 
       if (error) throw error;
