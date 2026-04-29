@@ -4,21 +4,31 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import EventLandingPage from '@/components/event-landing/EventLandingPage';
+import WebsitePreview from '@/components/event-website/WebsitePreview';
+import { mergeWebsiteConfig, type WebsiteConfig } from '@/lib/event-website-config';
+
+interface LoadedEvent {
+  id: string;
+  name: string;
+  location: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  website_config: Partial<WebsiteConfig> | null;
+}
 
 export default function PreviewClient({ slug }: { slug: string }) {
   const [state, setState] = useState<
-    { status: 'loading' } | { status: 'found'; eventId: string } | { status: 'missing' }
+    { status: 'loading' } | { status: 'found'; event: LoadedEvent } | { status: 'missing' }
   >({ status: 'loading' });
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from('events')
-        .select('id')
+        .select('id, name, location, start_date, end_date, website_config')
         .eq('slug', slug)
         .maybeSingle();
-      if (data?.id) setState({ status: 'found', eventId: data.id });
+      if (data?.id) setState({ status: 'found', event: data as LoadedEvent });
       else setState({ status: 'missing' });
     })();
   }, [slug]);
@@ -52,5 +62,22 @@ export default function PreviewClient({ slug }: { slug: string }) {
     );
   }
 
-  return <EventLandingPage eventId={state.eventId} />;
+  const { event } = state;
+  const config = mergeWebsiteConfig(event.website_config);
+
+  return (
+    <div className="min-h-screen" style={{ background: config.colors.pageBackground }}>
+      <WebsitePreview
+        eventName={event.name}
+        eventStart={event.start_date ? new Date(event.start_date) : null}
+        eventEnd={event.end_date ? new Date(event.end_date) : null}
+        location={event.location}
+        config={config}
+        interactive
+        onRegister={() => {
+          window.location.href = `/events/registration/tickets?eventId=${event.id}`;
+        }}
+      />
+    </div>
+  );
 }
