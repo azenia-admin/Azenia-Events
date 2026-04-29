@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { Calendar, Clock, Linkedin, Facebook, Mail, MapPin, Pencil, Loader2 } from 'lucide-react';
 import type { WebsiteConfig } from '@/lib/event-website-config';
+import RichTextEditor from '@/components/event-website/RichTextEditor';
 
 interface WebsitePreviewProps {
   eventName: string;
@@ -16,6 +17,7 @@ interface WebsitePreviewProps {
   editable?: boolean;
   onUploadImage?: (kind: 'banner' | 'card', file: File) => Promise<void>;
   uploadingKind?: 'banner' | 'card' | null;
+  onDescriptionChange?: (html: string) => void;
 }
 
 function XIcon({ className }: { className?: string }) {
@@ -37,6 +39,7 @@ export default function WebsitePreview({
   editable = false,
   onUploadImage,
   uploadingKind = null,
+  onDescriptionChange,
 }: WebsitePreviewProps) {
   const bannerInputRef = useRef<HTMLInputElement | null>(null);
   const cardInputRef = useRef<HTMLInputElement | null>(null);
@@ -220,11 +223,33 @@ export default function WebsitePreview({
         <div className="grid grid-cols-1 md:grid-cols-[1fr,280px] gap-8 py-8">
           <div>
             {active === 'about' && (
-              <div
-                className="text-center mx-auto max-w-2xl leading-relaxed"
-                style={{ color: config.colors.tabsText }}
-              >
-                <p className="whitespace-pre-wrap">{config.description}</p>
+              <div className="mx-auto max-w-2xl">
+                <p
+                  className="text-xs uppercase tracking-wider mb-2"
+                  style={{ color: config.colors.tabsText }}
+                >
+                  Description
+                </p>
+                {editable && onDescriptionChange ? (
+                  <RichTextEditor
+                    value={config.description}
+                    onChange={onDescriptionChange}
+                    color={config.colors.tabsText}
+                  />
+                ) : (
+                  <div
+                    className="leading-relaxed rte-body"
+                    style={{ color: config.colors.tabsText }}
+                    dangerouslySetInnerHTML={{
+                      __html: /<\/?[a-z][\s\S]*?>/i.test(config.description)
+                        ? config.description
+                        : config.description
+                            .split(/\n{2,}/)
+                            .map((b) => `<p>${b.replace(/\n/g, '<br/>')}</p>`)
+                            .join(''),
+                    }}
+                  />
+                )}
                 {config.customHtml && (
                   <div
                     className="mt-6 text-left"

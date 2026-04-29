@@ -401,14 +401,9 @@ export default function EventWebsitePageClient() {
                         </div>
                       </div>
 
-                      <Field label="Description">
-                        <textarea
-                          rows={5}
-                          value={config.description}
-                          onChange={(e) => updateConfig('description', e.target.value)}
-                          className="input-field resize-none"
-                        />
-                      </Field>
+                      <div className="rounded-xl border border-dashed border-[#E8DFD3] bg-[#FAF6F1] px-3 py-2.5 text-xs text-[#8A8378]">
+                        Tip: edit your event description directly in the live preview — formatting tools are available there.
+                      </div>
 
                       <Field label="Custom HTML">
                         <textarea
@@ -602,6 +597,7 @@ export default function EventWebsitePageClient() {
                     editable
                     uploadingKind={uploadingKind}
                     onUploadImage={handleUploadImage}
+                    onDescriptionChange={(html) => updateConfig('description', html)}
                   />
                 </div>
               </div>
