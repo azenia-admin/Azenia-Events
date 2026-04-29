@@ -147,24 +147,33 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
     <>
       <SidebarHeader>
         {isLoading ? (
-            <div className="flex flex-col gap-2 p-2">
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-6 w-3/4" />
-            </div>
+          <div className="flex flex-col gap-2 p-2">
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-6 w-3/4" />
+          </div>
         ) : (
           event && (
-            <div className="flex flex-col gap-2 p-2">
+            <div className="flex flex-col gap-3 p-2">
               {eventImage && (
-                <Image
-                  src={eventImage.imageUrl}
-                  alt={eventImage.description}
-                  width={250}
-                  height={140}
-                  className="rounded-md object-cover"
-                  data-ai-hint={eventImage.imageHint}
-                />
+                <div className="relative overflow-hidden rounded-xl ring-1 ring-[#E8DFD3]">
+                  <Image
+                    src={eventImage.imageUrl}
+                    alt={eventImage.description}
+                    width={260}
+                    height={150}
+                    className="object-cover w-full h-[140px]"
+                    data-ai-hint={eventImage.imageHint}
+                  />
+                </div>
               )}
-              <h2 className="font-semibold text-lg">{event.name}</h2>
+              <div className="px-1">
+                <p className="text-[10px] font-medium tracking-wider uppercase text-[#D97757]">
+                  Event
+                </p>
+                <h2 className="font-headline font-semibold text-base leading-snug text-[#1B1A17] mt-0.5">
+                  {event.name}
+                </h2>
+              </div>
             </div>
           )
         )}
@@ -216,7 +225,7 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/">
+              <Link href="/dashboard">
                 <ArrowLeft />
                 <span>Back to Events</span>
               </Link>
