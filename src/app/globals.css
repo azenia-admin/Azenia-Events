@@ -33,6 +33,14 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --sidebar-background: 33 43% 96%;
+    --sidebar-foreground: 30 9% 14%;
+    --sidebar-primary: 30 9% 14%;
+    --sidebar-primary-foreground: 33 43% 96%;
+    --sidebar-accent: 33 43% 89%;
+    --sidebar-accent-foreground: 30 9% 14%;
+    --sidebar-border: 31 30% 85%;
+    --sidebar-ring: 15 62% 60%;
   }
   .dark {
     --background: 222.2 84% 4.9%;

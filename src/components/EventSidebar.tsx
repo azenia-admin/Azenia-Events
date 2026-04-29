@@ -33,6 +33,7 @@ import { supabase } from '@/lib/supabase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from './ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 
 type EventSidebarProps = {
@@ -178,56 +179,94 @@ export function EventSidebar({ eventId }: EventSidebarProps) {
           )
         )}
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {mainNav.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={isLinkActive(item.href)}
-              >
-                <Link href={getHref(item.href)}>
-                  <item.icon />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-          {subNavs.map((nav) => (
-             <Collapsible key={nav.label} defaultOpen={nav.items.some(item => isSubLinkActive(item.href))}>
+      <SidebarContent className="px-2 py-2">
+        <div className="mx-2 my-2 h-px bg-[#E8DFD3]" />
+        <p className="px-3 pb-2 text-[10px] font-medium tracking-wider uppercase text-[#8A8378]">
+          Overview
+        </p>
+        <SidebarMenu className="gap-0.5">
+          {mainNav.map((item) => {
+            const active = isLinkActive(item.href);
+            return (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={active}
+                  className={cn(
+                    'rounded-xl h-9 px-3 text-sm font-medium text-[#55514B] hover:bg-[#F0E6D6] hover:text-[#1B1A17]',
+                    active &&
+                      'bg-[#1B1A17] text-[#FAF6F1] hover:bg-[#1B1A17] hover:text-[#FAF6F1] data-[active=true]:bg-[#1B1A17] data-[active=true]:text-[#FAF6F1]'
+                  )}
+                >
+                  <Link href={getHref(item.href)}>
+                    <item.icon className={cn('h-4 w-4', active ? 'text-[#E8A355]' : 'text-[#8A8378]')} />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+
+        <p className="px-3 pt-4 pb-2 text-[10px] font-medium tracking-wider uppercase text-[#8A8378]">
+          Manage
+        </p>
+        <SidebarMenu className="gap-0.5">
+          {subNavs.map((nav) => {
+            const hasActive = nav.items.some((i) => isSubLinkActive(i.href));
+            return (
+              <Collapsible key={nav.label} defaultOpen={hasActive}>
                 <CollapsibleTrigger asChild>
-                   <SidebarMenuButton className="justify-between w-full">
-                        <div className="flex items-center gap-2">
-                            <nav.icon />
-                            <span>{nav.label}</span>
-                        </div>
-                        <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:-rotate-180" />
-                   </SidebarMenuButton>
+                  <SidebarMenuButton
+                    className={cn(
+                      'justify-between w-full rounded-xl h-9 px-3 text-sm font-medium text-[#55514B] hover:bg-[#F0E6D6] hover:text-[#1B1A17]',
+                      hasActive && 'text-[#1B1A17]'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <nav.icon className="h-4 w-4 text-[#8A8378]" />
+                      <span>{nav.label}</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 transition-transform text-[#8A8378] [&[data-state=open]]:-rotate-180" />
+                  </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                    <SidebarMenuSub>
-                    {nav.items.map((item) => (
+                  <SidebarMenuSub className="mx-3 my-1 border-[#E8DFD3] gap-0.5">
+                    {nav.items.map((item) => {
+                      const active = isSubLinkActive(item.href);
+                      return (
                         <SidebarMenuSubItem key={item.href}>
-                            <SidebarMenuSubButton asChild isActive={isSubLinkActive(item.href)}>
-                                <Link href={getHref(item.href)}>
-                                    {item.label}
-                                </Link>
-                            </SidebarMenuSubButton>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={active}
+                            className={cn(
+                              'rounded-lg h-8 text-sm text-[#55514B] hover:bg-[#F0E6D6] hover:text-[#1B1A17]',
+                              active &&
+                                'bg-[#E8A355]/15 text-[#1B1A17] font-medium data-[active=true]:bg-[#E8A355]/15 data-[active=true]:text-[#1B1A17]'
+                            )}
+                          >
+                            <Link href={getHref(item.href)}>{item.label}</Link>
+                          </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
-                    ))}
-                    </SidebarMenuSub>
+                      );
+                    })}
+                  </SidebarMenuSub>
                 </CollapsibleContent>
-             </Collapsible>
-          ))}
+              </Collapsible>
+            );
+          })}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-[#E8DFD3] px-2 py-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton
+              asChild
+              className="rounded-xl h-9 px-3 text-sm text-[#55514B] hover:bg-[#F0E6D6] hover:text-[#1B1A17]"
+            >
               <Link href="/dashboard">
-                <ArrowLeft />
-                <span>Back to Events</span>
+                <ArrowLeft className="h-4 w-4 text-[#8A8378]" />
+                <span>Back to events</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
