@@ -2,8 +2,25 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, Linkedin, Facebook, Mail, MapPin, Pencil, Loader2 } from 'lucide-react';
-import type { WebsiteConfig } from '@/lib/event-website-config';
+import {
+  Calendar,
+  Clock,
+  Linkedin,
+  Facebook,
+  Mail,
+  MapPin,
+  Pencil,
+  Loader2,
+  Handshake,
+  Mic2,
+  Store,
+  Gavel,
+  Heart,
+  Target,
+  Users,
+  Navigation,
+} from 'lucide-react';
+import type { WebsiteColors, WebsiteConfig } from '@/lib/event-website-config';
 import RichTextEditor from '@/components/event-website/RichTextEditor';
 
 interface WebsitePreviewProps {
@@ -205,7 +222,7 @@ export default function WebsitePreview({
             return (
               <button
                 key={t.key}
-                onClick={() => interactive && setActiveTab(t.key)}
+                onClick={() => setActiveTab(t.key)}
                 className="pb-3 text-sm font-medium whitespace-nowrap transition-colors"
                 style={{
                   color: isActive ? config.colors.selectedTab : config.colors.tabsText,
@@ -258,13 +275,26 @@ export default function WebsitePreview({
                 )}
               </div>
             )}
-            {active !== 'about' && (
-              <p
-                className="text-center py-12 text-sm"
-                style={{ color: config.colors.tabsText }}
-              >
-                Content for this tab will appear here once you add it.
-              </p>
+            {active === 'agenda' && (
+              <AgendaTab colors={config.colors} />
+            )}
+            {active === 'sponsors' && (
+              <SponsorsTab colors={config.colors} />
+            )}
+            {active === 'speakers' && (
+              <SpeakersTab colors={config.colors} />
+            )}
+            {active === 'exhibitors' && (
+              <ExhibitorsTab colors={config.colors} />
+            )}
+            {active === 'auction' && (
+              <AuctionTab colors={config.colors} />
+            )}
+            {active === 'donate' && (
+              <DonateTab colors={config.colors} />
+            )}
+            {active === 'venue' && (
+              <VenueTab colors={config.colors} location={location} />
             )}
           </div>
 
@@ -347,6 +377,307 @@ export default function WebsitePreview({
             </button>
           </div>
         </footer>
+      </div>
+    </div>
+  );
+}
+
+function TabCard({
+  colors,
+  title,
+  children,
+}: {
+  colors: WebsiteColors;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-black/10 bg-white p-4 space-y-2">
+      <h4 className="text-sm font-semibold" style={{ color: colors.accent }}>
+        {title}
+      </h4>
+      <div className="text-sm" style={{ color: colors.tabsText }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AgendaTab({ colors }: { colors: WebsiteColors }) {
+  const items = [
+    { time: '9:00 AM', title: 'Registration & Welcome Coffee' },
+    { time: '10:00 AM', title: 'Opening Keynote' },
+    { time: '12:00 PM', title: 'Networking Lunch' },
+    { time: '2:00 PM', title: 'Breakout Sessions' },
+    { time: '5:00 PM', title: 'Closing Remarks' },
+  ];
+  return (
+    <div className="space-y-3">
+      <h3 className="font-semibold text-lg" style={{ color: colors.eventName }}>
+        Agenda
+      </h3>
+      <div className="divide-y divide-black/10 rounded-xl border border-black/10 bg-white">
+        {items.map((it) => (
+          <div key={it.time} className="flex items-center gap-4 px-4 py-3">
+            <span className="w-20 text-sm font-medium" style={{ color: colors.accent }}>
+              {it.time}
+            </span>
+            <span className="text-sm" style={{ color: colors.tabsText }}>
+              {it.title}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SponsorsTab({ colors }: { colors: WebsiteColors }) {
+  const tiers = [
+    { tier: 'Platinum', count: 2 },
+    { tier: 'Gold', count: 4 },
+    { tier: 'Silver', count: 6 },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Handshake className="h-5 w-5" style={{ color: colors.accent }} />
+        <h3 className="font-semibold text-lg" style={{ color: colors.eventName }}>
+          Our Sponsors
+        </h3>
+      </div>
+      {tiers.map(({ tier, count }) => (
+        <div key={tier} className="space-y-2">
+          <p className="text-xs uppercase tracking-wider" style={{ color: colors.accent }}>
+            {tier}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className="h-16 rounded-lg border border-black/10 bg-white flex items-center justify-center text-xs"
+                style={{ color: colors.tabsText }}
+              >
+                Logo
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SpeakersTab({ colors }: { colors: WebsiteColors }) {
+  const speakers = [
+    { name: 'Alex Morgan', role: 'CEO, Northwind' },
+    { name: 'Jordan Lee', role: 'Head of Design, Pixel Co.' },
+    { name: 'Sam Patel', role: 'VP Engineering, Acme' },
+    { name: 'Riley Chen', role: 'Founder, Studio Nine' },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Mic2 className="h-5 w-5" style={{ color: colors.accent }} />
+        <h3 className="font-semibold text-lg" style={{ color: colors.eventName }}>
+          Speakers
+        </h3>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {speakers.map((s) => (
+          <div key={s.name} className="text-center space-y-2">
+            <div
+              className="aspect-square rounded-full border border-black/10 bg-white flex items-center justify-center"
+              style={{ color: colors.tabsText }}
+            >
+              <Users className="h-7 w-7 opacity-60" />
+            </div>
+            <p className="text-sm font-medium" style={{ color: colors.eventName }}>
+              {s.name}
+            </p>
+            <p className="text-xs" style={{ color: colors.tabsText }}>
+              {s.role}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ExhibitorsTab({ colors }: { colors: WebsiteColors }) {
+  const booths = Array.from({ length: 6 }).map((_, i) => ({
+    booth: `Booth ${i + 1}`,
+    name: ['Northwind', 'Pixel Co.', 'Acme', 'Studio Nine', 'Lumen', 'Vertex'][i],
+  }));
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Store className="h-5 w-5" style={{ color: colors.accent }} />
+        <h3 className="font-semibold text-lg" style={{ color: colors.eventName }}>
+          Exhibitors
+        </h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {booths.map((b) => (
+          <div
+            key={b.booth}
+            className="rounded-xl border border-black/10 bg-white p-4 flex items-center justify-between"
+          >
+            <div>
+              <p className="text-sm font-medium" style={{ color: colors.eventName }}>
+                {b.name}
+              </p>
+              <p className="text-xs" style={{ color: colors.tabsText }}>
+                {b.booth}
+              </p>
+            </div>
+            <span
+              className="text-xs rounded-full px-2.5 py-1"
+              style={{ backgroundColor: `${colors.accent}1A`, color: colors.accent }}
+            >
+              Visit
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AuctionTab({ colors }: { colors: WebsiteColors }) {
+  const items = [
+    { title: 'Signed Art Print', bid: '$220' },
+    { title: 'Weekend Getaway', bid: '$1,450' },
+    { title: 'Dinner For Two', bid: '$180' },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Gavel className="h-5 w-5" style={{ color: colors.accent }} />
+        <h3 className="font-semibold text-lg" style={{ color: colors.eventName }}>
+          Silent Auction
+        </h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {items.map((it) => (
+          <div key={it.title} className="rounded-xl border border-black/10 bg-white overflow-hidden">
+            <div
+              className="aspect-[4/3]"
+              style={{ backgroundColor: `${colors.accent}14` }}
+            />
+            <div className="p-3 space-y-1">
+              <p className="text-sm font-medium" style={{ color: colors.eventName }}>
+                {it.title}
+              </p>
+              <p className="text-xs" style={{ color: colors.tabsText }}>
+                Current bid: <span style={{ color: colors.accent }}>{it.bid}</span>
+              </p>
+              <button
+                className="w-full mt-2 h-8 rounded-full text-xs font-semibold text-white"
+                style={{ backgroundColor: colors.accent }}
+              >
+                Place Bid
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DonateTab({ colors }: { colors: WebsiteColors }) {
+  const amounts = ['$5', '$15', '$30', '$50'];
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-2">
+        <Heart className="h-5 w-5" style={{ color: colors.accent }} />
+        <h3 className="font-semibold text-lg" style={{ color: colors.eventName }}>
+          Donate
+        </h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <TabCard colors={colors} title="How To Donate">
+          Submit your donation here or text your donation to [account activation required] with the word &apos;Donate&apos; + the amount. ex. Donate100
+        </TabCard>
+        <TabCard colors={colors} title="Donation Goal">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4" style={{ color: colors.accent }} />
+            <span className="font-semibold" style={{ color: colors.eventName }}>
+              $0 Donated
+            </span>
+          </div>
+          <p className="text-xs mt-1">Raised by 0 people</p>
+        </TabCard>
+        <TabCard colors={colors} title="0 Donors">
+          <p className="text-xs">Be the first to contribute.</p>
+        </TabCard>
+      </div>
+
+      <div className="rounded-xl border border-black/10 bg-white p-4 space-y-3">
+        <div className="grid grid-cols-4 gap-2">
+          {amounts.map((a, i) => (
+            <button
+              key={a}
+              className="h-10 rounded-lg text-sm font-medium border"
+              style={{
+                backgroundColor: i === 0 ? colors.accent : 'white',
+                color: i === 0 ? 'white' : colors.tabsText,
+                borderColor: i === 0 ? colors.accent : 'rgba(0,0,0,0.1)',
+              }}
+            >
+              {a}
+            </button>
+          ))}
+        </div>
+        <div
+          className="flex items-center gap-2 rounded-lg border border-black/10 bg-white px-3 h-10"
+          style={{ color: colors.tabsText }}
+        >
+          <span className="text-sm">$</span>
+          <input
+            defaultValue="5"
+            className="flex-1 bg-transparent text-sm focus:outline-none"
+          />
+        </div>
+        <p className="text-xs" style={{ color: colors.tabsText }}>
+          You will be charged $5.00.
+        </p>
+        <button
+          className="w-full h-11 rounded-full text-sm font-semibold text-white"
+          style={{ backgroundColor: colors.accent }}
+        >
+          Donate
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VenueTab({
+  colors,
+  location,
+}: {
+  colors: WebsiteColors;
+  location: string | null;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Navigation className="h-5 w-5" style={{ color: colors.accent }} />
+        <h3 className="font-semibold text-lg" style={{ color: colors.eventName }}>
+          Venue Map
+        </h3>
+      </div>
+      <div
+        className="aspect-[16/9] rounded-xl border border-black/10 flex items-center justify-center"
+        style={{ backgroundColor: `${colors.accent}0F`, color: colors.tabsText }}
+      >
+        <div className="text-center space-y-1">
+          <MapPin className="h-7 w-7 mx-auto opacity-60" />
+          <p className="text-sm">{location || 'Venue location coming soon.'}</p>
+        </div>
       </div>
     </div>
   );
