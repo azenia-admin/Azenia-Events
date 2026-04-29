@@ -33,6 +33,7 @@ import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 type TicketType = 'paid' | 'free' | 'donation';
 
@@ -191,6 +192,7 @@ export default function CreateTicketSidebar({ open, onOpenChange, eventId, onTic
   };
 
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -220,11 +222,18 @@ export default function CreateTicketSidebar({ open, onOpenChange, eventId, onTic
 
     setSaving(false);
 
-    if (!error) {
-      onOpenChange(false);
-      resetForm();
-      onTicketCreated?.();
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not save ticket',
+        description: error.message,
+      });
+      return;
     }
+
+    onOpenChange(false);
+    resetForm();
+    onTicketCreated?.();
   };
 
   return (
