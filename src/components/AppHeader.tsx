@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Triangle } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useUser, useAuth } from '@/lib/supabase-auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { usePathname } from 'next/navigation';
@@ -30,7 +30,7 @@ export function AppHeader() {
   const { user } = useUser();
   const { signOut } = useAuth();
   const pathname = usePathname();
-  const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
+  const userAvatar = PlaceHolderImages.find((p) => p.id === 'user-avatar');
 
   if (pathname === '/e' || pathname.startsWith('/e?')) return null;
   if (pathname === '/') return null;
@@ -39,18 +39,27 @@ export function AppHeader() {
   const isAnonymous = user?.is_anonymous ?? false;
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+
   return (
-    <header className="border-b bg-card">
+    <header className="border-b border-[#E8DFD3] bg-[#FAF6F1]/90 backdrop-blur sticky top-0 z-40">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
-              <Triangle className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg">Sherjil Baig Events</span>
-            </div>
+          <div className="flex items-center gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-[#1B1A17] flex items-center justify-center">
+                <span className="text-[#E8A355] font-headline font-bold text-sm">S</span>
+              </div>
+              <span className="font-headline font-bold text-lg tracking-tight text-[#1B1A17]">
+                SeatingSavvy
+              </span>
+            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-1 text-sm">
+                <Button
+                  variant="ghost"
+                  className="hidden md:flex items-center gap-1 text-sm text-[#55514B] hover:text-[#1B1A17] hover:bg-[#F0E6D6]"
+                >
                   Switch organizer
                   <ChevronDown className="h-4 w-4" />
                 </Button>
@@ -64,15 +73,17 @@ export function AppHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-            <nav className="hidden md:flex items-center gap-2">
-              {navLinks.map(link => (
+            <nav className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
                 <Button
                   key={link.href}
                   asChild
                   variant="ghost"
                   className={cn(
-                    'text-sm font-medium',
-                    pathname === link.href ? 'text-primary' : 'text-muted-foreground'
+                    'text-sm font-medium rounded-full px-4 hover:bg-[#F0E6D6]',
+                    isActive(link.href)
+                      ? 'text-[#1B1A17] bg-[#F0E6D6]'
+                      : 'text-[#55514B] hover:text-[#1B1A17]'
                   )}
                 >
                   <Link href={link.href}>{link.label}</Link>
@@ -81,17 +92,26 @@ export function AppHeader() {
             </nav>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button
+                  variant="ghost"
+                  className="relative h-9 w-9 rounded-full ring-1 ring-[#E8DFD3] hover:ring-[#D97757]/40"
+                >
                   <Avatar className="h-8 w-8">
-                    {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt={userAvatar.description} />}
-                    <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+                    {userAvatar && (
+                      <AvatarImage src={userAvatar.imageUrl} alt={userAvatar.description} />
+                    )}
+                    <AvatarFallback className="bg-[#1B1A17] text-[#E8A355]">
+                      {user?.email?.[0].toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{isAnonymous ? 'Anonymous User' : displayName}</p>
+                    <p className="text-sm font-medium leading-none">
+                      {isAnonymous ? 'Anonymous User' : displayName}
+                    </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {isAnonymous ? 'anon@example.com' : user?.email}
                     </p>
