@@ -51,17 +51,19 @@ export default function VenueDesigner({ eventId }: VenueDesignerProps) {
         return;
       }
 
-      const { data: existing, error: fetchError } = await supabase
+      const { data: existingRows, error: fetchError } = await supabase
         .from('floor_plans')
-        .select('id, width, height')
+        .select('id, width, height, created_at')
         .eq('event_id', eventId)
         .eq('user_id', userId)
-        .maybeSingle();
+        .order('created_at', { ascending: true })
+        .limit(1);
       if (fetchError) {
         setLoadError(fetchError.message);
         return;
       }
 
+      const existing = existingRows?.[0];
       if (existing) {
         if (!cancelled) {
           setFloorPlan({ id: existing.id, width: Number(existing.width), height: Number(existing.height) });
@@ -80,8 +82,26 @@ export default function VenueDesigner({ eventId }: VenueDesignerProps) {
         })
         .select('id, width, height')
         .maybeSingle();
-      if (insertError || !created) {
-        setLoadError(insertError?.message ?? 'Could not create floor plan.');
+
+      if (insertError) {
+        const { data: raceRows } = await supabase
+          .from('floor_plans')
+          .select('id, width, height, created_at')
+          .eq('event_id', eventId)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: true })
+          .limit(1);
+        const race = raceRows?.[0];
+        if (race && !cancelled) {
+          setFloorPlan({ id: race.id, width: Number(race.width), height: Number(race.height) });
+          return;
+        }
+        setLoadError(insertError.message);
+        return;
+      }
+
+      if (!created) {
+        setLoadError('Could not create floor plan.');
         return;
       }
       if (!cancelled) {
